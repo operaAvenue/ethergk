@@ -123,7 +123,10 @@ float sdMeshTexture(vec3 p, sampler3D tex, vec3 bboxMin, vec3 bboxMax) {
     }
     
     // Sample texture
-    return texture(tex, uvw).r;
+    float val = texture(tex, uvw).r;
+    // DEBUG: return a sphere instead to see if the shader is actually running this code for the node
+    vec3 center = (bboxMin + bboxMax) * 0.5;
+    return length(p - center) - 3.0;
 }
 `;
 
