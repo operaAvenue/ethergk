@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as THREE from 'three';
 import { addEdge, applyNodeChanges, applyEdgeChanges, Connection, Edge, EdgeChange, Node, NodeChange } from '@xyflow/react';
 
-export type NodeType = 'primitive' | 'boolean' | 'offset' | 'lattice' | 'mesh' | 'modifier' | 'output';
+export type NodeType = 'primitive' | 'boolean' | 'offset' | 'lattice' | 'mesh' | 'modifier' | 'transform' | 'deform' | 'repeat' | 'morph' | 'output';
 
 export interface BaseNodeData extends Record<string, unknown> {
   type: NodeType;
@@ -52,7 +52,30 @@ export interface ModifierNodeData extends BaseNodeData {
   amount: number;
 }
 
-export type LogicNodeData = PrimitiveNodeData | BooleanNodeData | LatticeNodeData | MeshNodeData | ModifierNodeData | OutputNodeData;
+export interface TransformNodeData extends BaseNodeData {
+  type: 'transform';
+  translate: [number, number, number];
+  rotate: [number, number, number];
+  scale: [number, number, number];
+}
+
+export interface DeformNodeData extends BaseNodeData {
+  type: 'deform';
+  deformType: 'twist';
+  strength: number;
+}
+
+export interface RepeatNodeData extends BaseNodeData {
+  type: 'repeat';
+  spacing: [number, number, number];
+}
+
+export interface MorphNodeData extends BaseNodeData {
+  type: 'morph';
+  amount: number;
+}
+
+export type LogicNodeData = PrimitiveNodeData | BooleanNodeData | LatticeNodeData | MeshNodeData | ModifierNodeData | TransformNodeData | DeformNodeData | RepeatNodeData | MorphNodeData | OutputNodeData;
 export type AppNode = Node<LogicNodeData>;
 
 interface AppState {
@@ -65,6 +88,11 @@ interface AppState {
   gridSize: number;
   modifiedGeometry: THREE.BufferGeometry | null;
   needsRebuild: boolean; // Flag to tell the voxelizer to rebuild
+  
+  // Layout State
+  layoutSplitRatio: number;
+  layoutIsVertical: boolean;
+  layoutIsSwapped: boolean;
   
   // React Flow Actions
   onNodesChange: (changes: NodeChange[]) => void;
@@ -80,6 +108,10 @@ interface AppState {
   setResolution: (res: number) => void;
   setModifiedGeometry: (geometry: THREE.BufferGeometry | null) => void;
   triggerRebuild: () => void;
+  
+  setLayoutSplitRatio: (ratio: number) => void;
+  setLayoutIsVertical: (isVert: boolean) => void;
+  setLayoutIsSwapped: (isSwap: boolean) => void;
 }
 
 const initialNodes: AppNode[] = [
@@ -96,6 +128,10 @@ export const useStore = create<AppState>((set, get) => ({
   gridSize: 10,
   modifiedGeometry: null,
   needsRebuild: true,
+  
+  layoutSplitRatio: 50,
+  layoutIsVertical: true,
+  layoutIsSwapped: false,
   
   onNodesChange: (changes) => set({
     nodes: applyNodeChanges(changes, get().nodes) as AppNode[],
@@ -148,5 +184,9 @@ export const useStore = create<AppState>((set, get) => ({
   
   setModifiedGeometry: (geometry) => set({ modifiedGeometry: geometry, needsRebuild: false }),
   
-  triggerRebuild: () => set({ needsRebuild: true })
+  triggerRebuild: () => set({ needsRebuild: true }),
+  
+  setLayoutSplitRatio: (ratio) => set({ layoutSplitRatio: ratio }),
+  setLayoutIsVertical: (isVert) => set({ layoutIsVertical: isVert }),
+  setLayoutIsSwapped: (isSwap) => set({ layoutIsSwapped: isSwap })
 }));

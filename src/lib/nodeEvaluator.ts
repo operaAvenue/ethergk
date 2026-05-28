@@ -52,23 +52,22 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
           data.bvh.closestPointToPoint(transformedP, targetInfo);
           
           let signedDist = targetInfo.distance;
-          if (targetInfo.faceIndex !== undefined) {
-            const posAttr = data.geometry.attributes.position;
-            const idxAttr = data.geometry.index;
-            
-            const a = new THREE.Vector3().fromBufferAttribute(posAttr, idxAttr.getX(targetInfo.faceIndex * 3));
-            const b = new THREE.Vector3().fromBufferAttribute(posAttr, idxAttr.getX(targetInfo.faceIndex * 3 + 1));
-            const c = new THREE.Vector3().fromBufferAttribute(posAttr, idxAttr.getX(targetInfo.faceIndex * 3 + 2));
-            
-            const cb = new THREE.Vector3().subVectors(c, b);
-            const ab = new THREE.Vector3().subVectors(a, b);
-            const faceNormal = cb.cross(ab).normalize();
-            
-            const dir = transformedP.clone().sub(targetInfo.point);
-            if (dir.dot(faceNormal) < 0) {
-              signedDist = -signedDist;
-            }
+          
+          // Use robust raycasting to determine inside/outside (parity check)
+          // Use an irrational direction to avoid perfectly hitting edges/vertices
+          const dir = new THREE.Vector3(Math.PI, Math.E, Math.SQRT2).normalize();
+          const ray = new THREE.Ray(transformedP, dir);
+          
+          // raycast returns an array of intersections
+          const hits = data.bvh.raycast(ray, THREE.DoubleSide);
+          
+          // If the number of intersections is odd, we are inside the mesh
+          if (hits && hits.length % 2 === 1) {
+            signedDist = -Math.abs(signedDist);
+          } else {
+            signedDist = Math.abs(signedDist);
           }
+          
           return { dist: signedDist, color: nodeColor };
         };
       }
@@ -163,14 +162,111 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
         };
       }
       
+      case 'transform': {
+        const baseNode = getConnectedNode(node.id, 'base') || getConnectedNode(node.id);
+        const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        
+        return (p: THREE.Vector3) => {
+          let transformedP = p.clone();
+          // Inverse Transform: Translate -> Rotate -> Scale
+          if (data.translate) transformedP = sdf.opTransform(transformedP, new THREE.Vector3(...data.translate));
+          if (data.rotate) {
+            const eul = new THREE.Euler(
+              THREE.MathUtils.degToRad(data.rotate[0] || 0),
+              THREE.MathUtils.degToRad(data.rotate[1] || 0),
+              THREE.MathUtils.degToRad(data.rotate[2] || 0),
+              'XYZ'
+            );
+            transformedP = sdf.opRotate(transformedP, eul);
+          }
+          if (data.scale && (data.scale[0] !== 1 || data.scale[1] !== 1 || data.scale[2] !== 1)) {
+            transformedP.x /= (data.scale[0] || 1);
+            transformedP.y /= (data.scale[1] || 1);
+            transformedP.z /= (data.scale[2] || 1);
+          }
+
+          const rBase = baseFunc(transformedP);
+          let dist = rBase.dist;
+          
+          if (data.scale && (data.scale[0] !== 1 || data.scale[1] !== 1 || data.scale[2] !== 1)) {
+             // Exact distance with non-uniform scale is mathematically hard for SDFs.
+             // An approximation is multiplying by the minimum scale factor to ensure safe raymarching bounds.
+             const minScale = Math.min(data.scale[0]||1, data.scale[1]||1, data.scale[2]||1);
+             dist *= minScale;
+          }
+          return { dist, color: rBase.color };
+        };
+      }
+
+      case 'deform': {
+        const baseNode = getConnectedNode(node.id, 'base') || getConnectedNode(node.id);
+        const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        return (p: THREE.Vector3) => {
+          let deformedP = p.clone();
+          if (data.deformType === 'twist') deformedP = sdf.opTwist(deformedP, data.strength || 0);
+          return baseFunc(deformedP);
+        };
+      }
+
+      case 'repeat': {
+        const baseNode = getConnectedNode(node.id, 'base') || getConnectedNode(node.id);
+        const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        return (p: THREE.Vector3) => {
+          const repP = sdf.opRepeat(p, new THREE.Vector3(...(data.spacing || [0,0,0])));
+          return baseFunc(repP);
+        };
+      }
+
+      case 'morph': {
+        const baseNode = getConnectedNode(node.id, 'base') || getConnectedNode(node.id);
+        const shapeBNode = getConnectedNode(node.id, 'shapeB');
+        const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        const shapeBFunc = shapeBNode ? compileNode(shapeBNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        
+        return (p: THREE.Vector3) => {
+          const rA = baseFunc(p);
+          const rB = shapeBFunc(p);
+          return { 
+            dist: sdf.opMorph(rA.dist, rB.dist, data.amount || 0),
+            color: rA.color.clone().lerp(rB.color, data.amount || 0)
+          };
+        };
+      }
+
       default:
         return () => ({ dist: 10000, color: defaultMissingColor });
     }
   };
 
-  // Start compilation from the node connected to Output
-  const finalInputNode = getConnectedNode(outputNode.id);
-  if (!finalInputNode) return () => ({ dist: 10000, color: defaultMissingColor });
+  const getAllConnectedNodes = (targetId: string, targetHandle?: string): AppNode[] => {
+    const connectedEdges = edges.filter(e => e.target === targetId && (!targetHandle || e.targetHandle === targetHandle));
+    return connectedEdges.map(e => nodes.find(n => n.id === e.source)).filter((n): n is AppNode => n !== undefined);
+  };
 
-  return compileNode(finalInputNode);
+  // Start compilation from ALL nodes connected to Output
+  const finalInputNodes = getAllConnectedNodes(outputNode.id);
+  
+  if (finalInputNodes.length === 0) return () => ({ dist: 10000, color: defaultMissingColor });
+  
+  if (finalInputNodes.length === 1) {
+    return compileNode(finalInputNodes[0]);
+  }
+
+  // If multiple nodes are connected to Output, implicitly Union them
+  const compiledFuncs = finalInputNodes.map(compileNode);
+  
+  return (p: THREE.Vector3) => {
+    let finalDist = 10000;
+    let finalColor = defaultMissingColor;
+    
+    for (const func of compiledFuncs) {
+      const res = func(p);
+      if (res.dist < finalDist) {
+        finalDist = res.dist;
+        finalColor = res.color;
+      }
+    }
+    
+    return { dist: finalDist, color: finalColor };
+  };
 }

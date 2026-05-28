@@ -115,3 +115,35 @@ export function opShell(d: number, thickness: number): number {
 export function opTransform(p: THREE.Vector3, position: THREE.Vector3): THREE.Vector3 {
   return p.clone().sub(position);
 }
+
+export function opRotate(p: THREE.Vector3, rotation: THREE.Euler): THREE.Vector3 {
+  // To rotate an object forward, we must rotate the sampling space backwards
+  const invRot = rotation.clone();
+  invRot.x = -invRot.x;
+  invRot.y = -invRot.y;
+  invRot.z = -invRot.z;
+  invRot.order = rotation.order === 'XYZ' ? 'ZYX' : 'XYZ'; // simplified inverse rotation for Euler
+  // A much robust way is to use Quaternions
+  const q = new THREE.Quaternion().setFromEuler(rotation).invert();
+  return p.clone().applyQuaternion(q);
+}
+
+export function opTwist(p: THREE.Vector3, strength: number): THREE.Vector3 {
+  const c = Math.cos(strength * p.y);
+  const s = Math.sin(strength * p.y);
+  const newX = p.x * c - p.z * s;
+  const newZ = p.x * s + p.z * c;
+  return new THREE.Vector3(newX, p.y, newZ);
+}
+
+export function opRepeat(p: THREE.Vector3, spacing: THREE.Vector3): THREE.Vector3 {
+  const modP = p.clone();
+  if (spacing.x > 0) modP.x = modP.x - spacing.x * Math.round(modP.x / spacing.x);
+  if (spacing.y > 0) modP.y = modP.y - spacing.y * Math.round(modP.y / spacing.y);
+  if (spacing.z > 0) modP.z = modP.z - spacing.z * Math.round(modP.z / spacing.z);
+  return modP;
+}
+
+export function opMorph(d1: number, d2: number, amount: number): number {
+  return d1 * (1.0 - amount) + d2 * amount;
+}

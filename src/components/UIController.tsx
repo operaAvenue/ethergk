@@ -8,7 +8,7 @@ import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { Upload, Download, Sparkles } from 'lucide-react';
+import { Upload, Download, Sparkles, ArrowLeftRight, Columns, Rows } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
 // @ts-ignore
@@ -48,33 +48,35 @@ export function UIController() {
         try {
           let geometry = loader.parse(contents as ArrayBuffer);
           
-          if (!geometry.index) {
-            geometry = BufferGeometryUtils.mergeVertices(geometry);
-          }
-          
-          // Auto scale to fit within Marching Cubes grid!
+          // Auto scale to fit within Marching Cubes grid BEFORE merging!
+          // This prevents floating point inaccuracies in huge or tiny STLs from breaking mergeVertices
           geometry.computeBoundingBox();
           const bbox = geometry.boundingBox!;
           const size = new THREE.Vector3();
           bbox.getSize(size);
           
           const maxDim = Math.max(size.x, size.y, size.z);
-          // We want the object to fit comfortably within `gridSize` (e.g. 10)
-          // So we scale it down to span at most gridSize * 0.8
           const targetMax = gridSize * 0.8;
           const scaleFactor = targetMax / maxDim;
           
           geometry.center(); 
           geometry.scale(scaleFactor, scaleFactor, scaleFactor);
+
+          // Now merge vertices with a tolerance suitable for the normalized scale (8.0)
+          if (!geometry.index) {
+            geometry = BufferGeometryUtils.mergeVertices(geometry, 1e-4);
+          }
           
           geometry.computeVertexNormals();
           geometry.computeBoundsTree();
+          const currentNodes = useStore.getState().nodes;
+          const yOffset = 300 + (currentNodes.filter(n => n.type === 'meshNode').length * 50);
           
           const newNodeId = 'mesh_' + Date.now();
           addNode({
             id: newNodeId,
             type: 'meshNode',
-            position: { x: 50, y: 300 },
+            position: { x: 50, y: yOffset },
             data: {
               type: 'mesh',
               name: file.name,
@@ -104,14 +106,21 @@ export function UIController() {
               needsRebuild: true
             });
           }
+          
+          // Clear input so we can import the same file again
+          event.target.value = '';
         } catch (error) {
           alert("Erro ao ler o arquivo STL.");
+          event.target.value = '';
         }
       }
     };
     reader.readAsArrayBuffer(file);
-    // Reset input
-    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleInputClick = (event: React.MouseEvent<HTMLInputElement>) => {
+    // Reset input value so the same file can be selected again
+    event.currentTarget.value = '';
   };
 
   const handleDownload = () => {
@@ -140,7 +149,7 @@ export function UIController() {
       <div className="flex items-center gap-2">
         <Sparkles className="w-5 h-5 text-fuchsia-500" />
         <h2 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-indigo-400">
-          Pico Node Editor
+          Ether Geometry Kernel
         </h2>
       </div>
 
@@ -158,20 +167,32 @@ export function UIController() {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+            onClick={() => useStore.getState().setLayoutIsSwapped(!useStore.getState().layoutIsSwapped)}
+            className="p-2 rounded hover:bg-zinc-800 transition-colors"
+            title="Swap Panels"
           >
-            <Upload className="w-4 h-4" /> Import STL
+            <ArrowLeftRight className="w-5 h-5 text-zinc-400" />
           </button>
-          <input 
-            type="file" 
-            accept=".stl" 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-          />
+          <button 
+            onClick={() => useStore.getState().setLayoutIsVertical(!useStore.getState().layoutIsVertical)}
+            className="p-2 rounded hover:bg-zinc-800 transition-colors mr-2"
+            title="Toggle Orientation"
+          >
+            {useStore.getState().layoutIsVertical ? <Rows className="w-5 h-5 text-zinc-400" /> : <Columns className="w-5 h-5 text-zinc-400" />}
+          </button>
+
+          <label className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer">
+            <Upload className="w-4 h-4" /> Import STL
+            <input 
+              type="file" 
+              accept=".stl" 
+              className="hidden" 
+              onClick={handleInputClick}
+              onChange={handleFileUpload} 
+            />
+          </label>
           
           <button 
             onClick={handleDownload}
