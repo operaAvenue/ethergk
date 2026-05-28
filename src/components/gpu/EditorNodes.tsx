@@ -184,9 +184,9 @@ export function LatticeNode(props: NodeProps<any>) {
       <div className="space-y-1">
         <label className="text-[10px] text-zinc-500 flex justify-between items-center">
           Pattern Scale 
-          <input type="number" step="0.1" value={num(data.scale)} onChange={(e) => updateNodeData(props.id, { scale: parseFloat(e.target.value) })} className="w-12 bg-zinc-950 border border-zinc-800 rounded px-1 text-center nodrag" />
+          <input type="number" step="1" value={num(data.scale)} onChange={(e) => updateNodeData(props.id, { scale: parseFloat(e.target.value) })} className="w-12 bg-zinc-950 border border-zinc-800 rounded px-1 text-center nodrag" />
         </label>
-        <input type="range" min="1.0" max="20.0" step="0.1" value={num(data.scale)} onChange={(e) => updateNodeData(props.id, { scale: parseFloat(e.target.value) })} className="w-full accent-cyan-500 nodrag" />
+        <input type="range" min="10" max="2000" step="1" value={num(data.scale)} onChange={(e) => updateNodeData(props.id, { scale: parseFloat(e.target.value) })} className="w-full accent-cyan-500 nodrag" />
       </div>
       <div className="space-y-1">
         <label className="text-[10px] text-zinc-500 flex justify-between items-center">

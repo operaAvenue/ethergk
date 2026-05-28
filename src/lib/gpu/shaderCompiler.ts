@@ -182,7 +182,7 @@ export function compileGraphToGLSL(): string {
         const baseCode = base ? generateNodeCode(base, pointVar) : '10000.0';
         let latCode = '10000.0';
         // Invert scale so sliding right = visually larger
-        const ls = (1.0 / (d.scale || 1.0)).toFixed(5);
+        const ls = (100.0 / (d.scale || 500.0)).toFixed(5);
         const lt = (d.thickness || 0.1).toFixed(5);
         switch (d.pattern) {
           case 'gyroid': latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;

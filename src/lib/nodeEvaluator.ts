@@ -130,7 +130,7 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
         return (p: THREE.Vector3) => {
           const rBase = baseFunc(p);
           let latticeDist = 10000;
-          const scale = 1.0 / (data.scale || 1.0);
+          const scale = 100.0 / (data.scale || 500.0);
           switch (data.pattern) {
             case 'schwarzP': latticeDist = sdf.sdSchwarzP(p, scale, data.thickness); break;
             case 'diamond': latticeDist = sdf.sdDiamond(p, scale, data.thickness); break;

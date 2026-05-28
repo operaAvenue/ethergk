@@ -134,8 +134,8 @@ export function SidebarEditor() {
             <option value="grid">Grid</option>
           </select>
           <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 flex justify-between">Scale <span>{d.scale?.toFixed(2)}</span></label>
-            <input type="range" min="1.0" max="20.0" step="0.1" value={num(d.scale || 1.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-cyan-500" />
+            <label className="text-[10px] text-zinc-500 flex justify-between">Scale <span>{d.scale?.toFixed(0)}</span></label>
+            <input type="range" min="10" max="2000" step="1" value={num(d.scale || 10.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-cyan-500" />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] text-zinc-500 flex justify-between">Thickness <span>{d.thickness?.toFixed(2)}</span></label>

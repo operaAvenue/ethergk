@@ -57,7 +57,7 @@ export function NodeEditor() {
         newNode = { id, type: 'booleanNode', position, data: { type: 'boolean', name: 'Boolean', operation: 'union', smoothness: 1.0 } };
         break;
       case 'lattice':
-        newNode = { id, type: 'latticeNode', position, data: { type: 'lattice', name: 'Lattice', pattern: 'gyroid', scale: 5, thickness: 0.1 } };
+        newNode = { id, type: 'latticeNode', position, data: { type: 'lattice', name: 'Lattice', pattern: 'gyroid', scale: 500, thickness: 0.1 } };
         break;
       default: return;
     }
