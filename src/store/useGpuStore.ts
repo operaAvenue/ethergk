@@ -29,6 +29,7 @@ export interface MeshNodeData extends BaseNodeData {
   sdfTexture?: THREE.Data3DTexture;
   bboxMin?: [number, number, number];
   bboxMax?: [number, number, number];
+  stlBase64?: string; // Embedded STL data for saving/loading
 }
 
 export interface BooleanNodeData extends BaseNodeData {
@@ -127,6 +128,8 @@ interface AppState {
   
   uiMode: 'nodes' | 'sidebar';
   setUiMode: (mode: 'nodes' | 'sidebar') => void;
+  
+  loadProject: (projectData: any) => void;
 }
 
 const initialNodes: AppNode[] = [
@@ -170,15 +173,24 @@ export const useGpuStore = create<AppState>((set, get) => ({
   
   updateNodeData: (id, data) => {
     set({
-      nodes: get().nodes.map((node) => {
+      nodes: get().nodes.map(node => {
         if (node.id === id) {
-          // It's important to create a new object here to trigger React renders
-          return { ...node, data: { ...node.data, ...data } as LogicNodeData };
+          return { ...node, data: { ...node.data, ...data } };
         }
         return node;
-      }),
+      })
     });
     get().triggerRebuild();
+  },
+  
+  loadProject: (projectData) => {
+    set({
+      nodes: projectData.nodes || [],
+      edges: projectData.edges || [],
+      resolution: projectData.resolution || 40,
+      gridSize: projectData.gridSize || 10,
+      needsRebuild: true
+    });
   },
   
   removeNode: (id) => {
