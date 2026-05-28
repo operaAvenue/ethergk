@@ -65,7 +65,29 @@ function RaymarchQuad() {
 
 export function GpuSceneViewer() {
   const nodes = useGpuStore((state) => state.nodes);
-  const meshNodes = nodes.filter(n => n.type === 'mesh' || n.data.type === 'mesh');
+  const edges = useGpuStore((state) => state.edges);
+  
+  // Find nodes connected to the output tree
+  const outputNode = nodes.find(n => n.type === 'outputNode' || n.data.type === 'output');
+  const connectedNodeIds = new Set<string>();
+  
+  if (outputNode) {
+    const queue = [outputNode.id];
+    while(queue.length > 0) {
+      const current = queue.shift()!;
+      connectedNodeIds.add(current);
+      // find all edges where target is current
+      const incoming = edges.filter(e => e.target === current);
+      for (const edge of incoming) {
+        if (!connectedNodeIds.has(edge.source)) {
+          queue.push(edge.source);
+        }
+      }
+    }
+  }
+
+  // Only render mesh nodes that are connected to the output
+  const meshNodes = nodes.filter(n => (n.type === 'mesh' || n.data.type === 'mesh') && connectedNodeIds.has(n.id));
 
   return (
     <div className="w-full h-full relative">
