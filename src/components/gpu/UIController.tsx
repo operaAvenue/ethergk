@@ -23,18 +23,20 @@ export function UIController() {
   const { addNode, resolution, setResolution, setModifiedGeometry, gridSize, needsRebuild } = useGpuStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Evaluate Graph
+  // Evaluate Graph with Debounce
   useEffect(() => {
     if (!needsRebuild) return;
     
-    try {
-      const glsl = compileGraphToGLSL();
-      useGpuStore.getState().setGlslShader(glsl);
-      useGpuStore.getState().triggerRebuild(); // Actually, just set the shader and clear rebuild
-      useGpuStore.setState({ needsRebuild: false });
-    } catch (err) {
-      console.error("Failed to compile shader:", err);
-    }
+    const t = setTimeout(() => {
+      try {
+        const glsl = compileGraphToGLSL();
+        useGpuStore.getState().setGlslShader(glsl);
+        useGpuStore.setState({ needsRebuild: false });
+      } catch (err) {
+        console.error("Failed to compile shader:", err);
+      }
+    }, 150);
+    return () => clearTimeout(t);
   }, [needsRebuild]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,6 +236,14 @@ export function UIController() {
         </div>
 
         <div className="flex gap-2 items-center">
+          <button 
+            onClick={() => useGpuStore.getState().setUiMode(useGpuStore.getState().uiMode === 'nodes' ? 'sidebar' : 'nodes')}
+            className={`p-2 rounded transition-colors mr-2 ${useGpuStore.getState().uiMode === 'sidebar' ? 'bg-fuchsia-600 text-white' : 'hover:bg-zinc-800 text-zinc-400'}`}
+            title="Toggle Sidebar Mode"
+          >
+            <Columns className="w-5 h-5" />
+          </button>
+          <div className="w-px h-6 bg-zinc-800 mx-2"></div>
           <button 
             onClick={() => useGpuStore.getState().setLayoutIsSwapped(!useGpuStore.getState().layoutIsSwapped)}
             className="p-2 rounded hover:bg-zinc-800 transition-colors"

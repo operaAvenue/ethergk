@@ -124,6 +124,9 @@ interface AppState {
   setLayoutSplitRatio: (ratio: number) => void;
   setLayoutIsVertical: (isVert: boolean) => void;
   setLayoutIsSwapped: (isSwap: boolean) => void;
+  
+  uiMode: 'nodes' | 'sidebar';
+  setUiMode: (mode: 'nodes' | 'sidebar') => void;
 }
 
 const initialNodes: AppNode[] = [
@@ -145,6 +148,9 @@ export const useGpuStore = create<AppState>((set, get) => ({
   layoutSplitRatio: 50,
   layoutIsVertical: true,
   layoutIsSwapped: false,
+  
+  uiMode: 'nodes',
+  setUiMode: (mode) => set({ uiMode: mode }),
   
   onNodesChange: (changes) => set({
     nodes: applyNodeChanges(changes, get().nodes) as AppNode[],

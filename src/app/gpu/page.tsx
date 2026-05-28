@@ -5,11 +5,12 @@ import { OrbitControls, Environment, ContactShadows, Grid, BakeShadows } from '@
 import { NodeEditor } from '@/components/gpu/NodeEditor';
 import { GpuSceneViewer } from '@/components/gpu/GpuSceneViewer';
 import { UIController } from '@/components/gpu/UIController';
+import { SidebarEditor } from '@/components/gpu/SidebarEditor';
 import { useGpuStore } from '@/store/useGpuStore';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
-  const { layoutSplitRatio, layoutIsVertical, layoutIsSwapped, setLayoutSplitRatio } = useGpuStore();
+  const { layoutSplitRatio, layoutIsVertical, layoutIsSwapped, setLayoutSplitRatio, uiMode } = useGpuStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
@@ -60,8 +61,8 @@ export default function Home() {
     <div key="3d" className="w-full h-full rounded-xl overflow-hidden border border-zinc-800 shadow-2xl relative">
       <GpuSceneViewer />
     </div>,
-    <div key="node" className="w-full h-full rounded-xl overflow-hidden border border-zinc-800 shadow-2xl relative">
-      <NodeEditor />
+    <div key="node" className="w-full h-full rounded-xl overflow-hidden shadow-2xl relative">
+      {uiMode === 'sidebar' ? <SidebarEditor /> : <NodeEditor />}
     </div>
   ];
 
