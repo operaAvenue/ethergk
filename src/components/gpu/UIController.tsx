@@ -117,6 +117,7 @@ export function UIController() {
           const sdfTexture = new THREE.Data3DTexture(dataArray, texSize, texSize, texSize);
           sdfTexture.format = THREE.RedFormat;
           sdfTexture.type = THREE.FloatType;
+          sdfTexture.internalFormat = 'R32F';
           sdfTexture.minFilter = THREE.LinearFilter;
           sdfTexture.magFilter = THREE.LinearFilter;
           sdfTexture.needsUpdate = true;

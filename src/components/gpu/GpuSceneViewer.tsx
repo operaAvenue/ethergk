@@ -30,27 +30,24 @@ function RaymarchQuad() {
       cameraRight: { value: new THREE.Vector3() },
       resolution: { value: new THREE.Vector2(size.width, size.height) }
     };
-    return baseUniforms;
-  }, []);
 
-  useEffect(() => {
-    uniforms.resolution.value.set(size.width, size.height);
-  }, [size, uniforms]);
-
-  useEffect(() => {
-    // Dynamically add mesh textures to uniforms when they change
+    // Dynamically add mesh textures to uniforms
     nodes.forEach(node => {
       const data = node.data as any;
       if ((node.type === 'meshNode' || data.type === 'mesh') && data.sdfTexture) {
         const texName = `u_meshTex_${node.id.replace(/-/g, '_')}`;
-        if (!uniforms[texName]) {
-          uniforms[texName] = { value: data.sdfTexture };
-        } else {
-          uniforms[texName].value = data.sdfTexture;
-        }
+        baseUniforms[texName] = { value: data.sdfTexture };
       }
     });
-  }, [nodes, uniforms]);
+
+    return baseUniforms;
+  }, [size.width, size.height, nodes]);
+
+  useEffect(() => {
+    if (materialRef.current) {
+      materialRef.current.uniformsNeedUpdate = true;
+    }
+  }, [uniforms]);
 
   useFrame(() => {
     if (!materialRef.current) return;
