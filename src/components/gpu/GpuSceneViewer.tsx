@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { useRef, useMemo, useEffect } from 'react';
 
 const vertexShader = `
-varying vec3 vPosition;
-varying vec2 vUv;
+out vec3 vPosition;
+out vec2 vUv;
 void main() {
   vPosition = position;
   vUv = uv;

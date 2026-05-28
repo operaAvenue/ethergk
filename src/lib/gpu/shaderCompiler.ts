@@ -269,8 +269,8 @@ export function compileGraphToGLSL(): string {
     .join('\n');
 
   const shader = `
-  varying vec3 vPosition;
-  varying vec2 vUv;
+  in vec3 vPosition;
+  in vec2 vUv;
   uniform vec3 cameraPos;
   uniform vec3 cameraDir;
   uniform vec3 cameraUp;
@@ -305,6 +305,8 @@ export function compileGraphToGLSL(): string {
       return dO;
   }
 
+  out vec4 fragColor;
+
   void main() {
       // Screen coordinates from -1 to 1
       vec2 uv = vUv * 2.0 - 1.0;
@@ -317,7 +319,7 @@ export function compileGraphToGLSL(): string {
       float d = rayMarch(ro, rd);
 
       if (d > MAX_DIST) {
-          gl_FragColor = vec4(0.035, 0.035, 0.043, 1.0); // bg-zinc-950
+          fragColor = vec4(0.035, 0.035, 0.043, 1.0); // bg-zinc-950
           return;
       }
 
@@ -332,7 +334,7 @@ export function compileGraphToGLSL(): string {
       // Ambient
       col += vec3(0.1);
 
-      gl_FragColor = vec4(col, 1.0);
+      fragColor = vec4(col, 1.0);
   }
   `;
 
