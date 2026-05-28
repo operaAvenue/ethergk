@@ -57,9 +57,8 @@ function RaymarchQuad() {
     uniforms.cameraPos.value.copy(cam.position);
     
     cam.getWorldDirection(uniforms.cameraDir.value);
-    
-    uniforms.cameraUp.value.copy(cam.up).transformDirection(cam.matrixWorld);
-    uniforms.cameraRight.value.crossVectors(uniforms.cameraDir.value, uniforms.cameraUp.value).normalize();
+    uniforms.cameraUp.value.set(0, 1, 0).applyQuaternion(cam.quaternion);
+    uniforms.cameraRight.value.set(1, 0, 0).applyQuaternion(cam.quaternion);
   });
 
   if (!glslShader || glslShader === '') return null;

@@ -152,11 +152,14 @@ export function compileGraphToGLSL(): string {
     const d = node.data as any;
     
     switch (node.data.type) {
-      case 'primitive':
-        if (d.shape === 'box') return `sdBox(${pointVar} - vec3(${d.position.join(',')}), vec3(${d.scale}))`;
-        if (d.shape === 'sphere') return `sdSphere(${pointVar} - vec3(${d.position.join(',')}), ${d.scale})`;
-        if (d.shape === 'cylinder') return `sdCylinder(${pointVar} - vec3(${d.position.join(',')}), vec3(${d.scale}, ${d.scale}, ${d.scale}))`;
+      case 'primitive': {
+        const pStr = `${d.position[0].toFixed(5)}, ${d.position[1].toFixed(5)}, ${d.position[2].toFixed(5)}`;
+        const sStr = (d.scale || 1.0).toFixed(5);
+        if (d.shape === 'box') return `sdBox(${pointVar} - vec3(${pStr}), vec3(${sStr}))`;
+        if (d.shape === 'sphere') return `sdSphere(${pointVar} - vec3(${pStr}), ${sStr})`;
+        if (d.shape === 'cylinder') return `sdCylinder(${pointVar} - vec3(${pStr}), vec3(${sStr}, ${sStr}, ${sStr}))`;
         return '10000.0';
+      }
 
       case 'boolean': {
         const base = getConnectedNodes(node.id, 'base')[0];
@@ -165,13 +168,14 @@ export function compileGraphToGLSL(): string {
         const d1 = generateNodeCode(base, pointVar);
         const d2 = shapeB ? generateNodeCode(shapeB, pointVar) : '10000.0';
         
+        const sm = (d.smoothness || 0.1).toFixed(5);
         switch (d.operation) {
           case 'union': return `opUnion(${d1}, ${d2})`;
           case 'subtract': return `opSubtract(${d1}, ${d2})`;
           case 'intersect': return `opIntersect(${d1}, ${d2})`;
-          case 'smoothUnion': return `opSmoothUnion(${d1}, ${d2}, ${d.smoothness})`;
-          case 'smoothSubtract': return `opSmoothSubtract(${d1}, ${d2}, ${d.smoothness})`;
-          case 'smoothIntersect': return `opSmoothIntersect(${d1}, ${d2}, ${d.smoothness})`;
+          case 'smoothUnion': return `opSmoothUnion(${d1}, ${d2}, ${sm})`;
+          case 'smoothSubtract': return `opSmoothSubtract(${d1}, ${d2}, ${sm})`;
+          case 'smoothIntersect': return `opSmoothIntersect(${d1}, ${d2}, ${sm})`;
           default: return d1;
         }
       }
@@ -180,12 +184,14 @@ export function compileGraphToGLSL(): string {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
         const baseCode = base ? generateNodeCode(base, pointVar) : '10000.0';
         let latCode = '10000.0';
+        const ls = (d.scale || 1.0).toFixed(5);
+        const lt = (d.thickness || 0.1).toFixed(5);
         switch (d.pattern) {
-          case 'gyroid': latCode = `sdGyroid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
-          case 'schwarzP': latCode = `sdSchwarzP(${pointVar}, ${d.scale}, ${d.thickness})`; break;
-          case 'diamond': latCode = `sdDiamond(${pointVar}, ${d.scale}, ${d.thickness})`; break;
-          case 'grid': latCode = `sdGrid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
-          default: latCode = `sdGyroid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
+          case 'gyroid': latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzP': latCode = `sdSchwarzP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'diamond': latCode = `sdDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'grid': latCode = `sdGrid(${pointVar}, ${ls}, ${lt})`; break;
+          default: latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;
         }
         return `opIntersect(${baseCode}, ${latCode})`;
       }
@@ -239,6 +245,7 @@ export function compileGraphToGLSL(): string {
       }
       
       case 'mesh':
+        console.log("Compiling mesh node. Data:", d);
         if (d.sdfTexture && d.bboxMin && d.bboxMax) {
           const texName = `u_meshTex_${node.id.replace(/-/g, '_')}`;
           const bMin = `vec3(${d.bboxMin[0].toFixed(5)}, ${d.bboxMin[1].toFixed(5)}, ${d.bboxMin[2].toFixed(5)})`;
@@ -340,6 +347,8 @@ export function compileGraphToGLSL(): string {
       fragColor = vec4(col, 1.0);
   }
   `;
+
+  console.log("Compiled GLSL Shader:\n", shader);
 
   return shader;
 }
