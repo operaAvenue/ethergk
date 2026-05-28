@@ -64,10 +64,38 @@ function RaymarchQuad() {
 }
 
 export function GpuSceneViewer() {
+  const nodes = useGpuStore((state) => state.nodes);
+  const meshNodes = nodes.filter(n => n.type === 'mesh' || n.data.type === 'mesh');
+
   return (
     <div className="w-full h-full relative">
       <Canvas camera={{ position: [10, 10, 10], fov: 50 }}>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[10, 10, 5]} intensity={1} />
+        
         <RaymarchQuad />
+        
+        {meshNodes.map((node) => {
+          const data = node.data as any;
+          if (!data.geometry) return null;
+          return (
+            <mesh 
+              key={node.id} 
+              geometry={data.geometry} 
+              position={data.position ? new THREE.Vector3(...data.position) : new THREE.Vector3()}
+              scale={data.scale || 1}
+            >
+              <meshStandardMaterial 
+                color={data.color || '#f97316'} 
+                roughness={0.4} 
+                metalness={0.1}
+                transparent={true}
+                opacity={0.8}
+              />
+            </mesh>
+          );
+        })}
+
         <OrbitControls makeDefault />
       </Canvas>
     </div>
