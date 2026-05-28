@@ -105,6 +105,26 @@ vec3 opSymRadial(vec3 p, float slices) {
     a = mod(a + b/2.0, b) - b/2.0;
     return vec3(cos(a)*r, p.y, sin(a)*r);
 }
+
+// 3D Texture Lookup for Baked STLs
+float sdMeshTexture(vec3 p, sampler3D tex, vec3 bboxMin, vec3 bboxMax) {
+    // Map point p to [0, 1] texture coordinates based on bounding box
+    vec3 uvw = (p - bboxMin) / (bboxMax - bboxMin);
+    
+    // If point is outside the bounding box, return a positive distance to the box
+    if (uvw.x < 0.0 || uvw.x > 1.0 || 
+        uvw.y < 0.0 || uvw.y > 1.0 || 
+        uvw.z < 0.0 || uvw.z > 1.0) {
+        
+        vec3 center = (bboxMin + bboxMax) * 0.5;
+        vec3 halfExtents = (bboxMax - bboxMin) * 0.5;
+        vec3 d = abs(p - center) - halfExtents;
+        return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0)) + 0.1; // +0.1 padding to prevent artifacts
+    }
+    
+    // Sample texture
+    return texture(tex, uvw).r;
+}
 `;
 
 // Build Map Function dynamically
@@ -216,7 +236,12 @@ export function compileGraphToGLSL(): string {
       }
       
       case 'mesh':
-        // Not supporting arbitrary STLs in Raymarching yet, needs 3D Textures
+        if (d.sdfTexture && d.bboxMin && d.bboxMax) {
+          const texName = `u_meshTex_${node.id.replace(/-/g, '_')}`;
+          const bMin = `vec3(${d.bboxMin[0].toFixed(5)}, ${d.bboxMin[1].toFixed(5)}, ${d.bboxMin[2].toFixed(5)})`;
+          const bMax = `vec3(${d.bboxMax[0].toFixed(5)}, ${d.bboxMax[1].toFixed(5)}, ${d.bboxMax[2].toFixed(5)})`;
+          return `sdMeshTexture(${pointVar}, ${texName}, ${bMin}, ${bMax})`;
+        }
         return '10000.0';
 
       default:
@@ -237,6 +262,12 @@ export function compileGraphToGLSL(): string {
     mapBody = `return ${combined};`;
   }
 
+  // Find all mesh textures to declare as uniforms
+  const meshUniforms = nodes
+    .filter(n => (n.type === 'meshNode' || n.data.type === 'mesh') && (n.data as any).sdfTexture)
+    .map(n => `uniform sampler3D u_meshTex_${n.id.replace(/-/g, '_')};`)
+    .join('\n');
+
   const shader = `
   varying vec3 vPosition;
   varying vec2 vUv;
@@ -245,6 +276,7 @@ export function compileGraphToGLSL(): string {
   uniform vec3 cameraUp;
   uniform vec3 cameraRight;
   uniform vec2 resolution;
+  ${meshUniforms}
 
   ${SDF_LIBRARY}
 

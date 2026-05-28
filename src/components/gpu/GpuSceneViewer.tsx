@@ -18,20 +18,39 @@ void main() {
 
 function RaymarchQuad() {
   const glslShader = useGpuStore((state) => state.glslShader);
+  const nodes = useGpuStore((state) => state.nodes);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
   const { camera, size } = useThree();
 
-  const uniforms = useMemo(() => ({
-    cameraPos: { value: new THREE.Vector3() },
-    cameraDir: { value: new THREE.Vector3() },
-    cameraUp: { value: new THREE.Vector3() },
-    cameraRight: { value: new THREE.Vector3() },
-    resolution: { value: new THREE.Vector2(size.width, size.height) }
-  }), []);
+  const uniforms = useMemo(() => {
+    const baseUniforms: any = {
+      cameraPos: { value: new THREE.Vector3() },
+      cameraDir: { value: new THREE.Vector3() },
+      cameraUp: { value: new THREE.Vector3() },
+      cameraRight: { value: new THREE.Vector3() },
+      resolution: { value: new THREE.Vector2(size.width, size.height) }
+    };
+    return baseUniforms;
+  }, []);
 
   useEffect(() => {
     uniforms.resolution.value.set(size.width, size.height);
-  }, [size]);
+  }, [size, uniforms]);
+
+  useEffect(() => {
+    // Dynamically add mesh textures to uniforms when they change
+    nodes.forEach(node => {
+      const data = node.data as any;
+      if ((node.type === 'meshNode' || data.type === 'mesh') && data.sdfTexture) {
+        const texName = `u_meshTex_${node.id.replace(/-/g, '_')}`;
+        if (!uniforms[texName]) {
+          uniforms[texName] = { value: data.sdfTexture };
+        } else {
+          uniforms[texName].value = data.sdfTexture;
+        }
+      }
+    });
+  }, [nodes, uniforms]);
 
   useFrame(() => {
     if (!materialRef.current) return;
@@ -58,37 +77,13 @@ function RaymarchQuad() {
         uniforms={uniforms}
         depthWrite={false}
         depthTest={false}
+        glslVersion={THREE.GLSL3}
       />
     </mesh>
   );
 }
 
 export function GpuSceneViewer() {
-  const nodes = useGpuStore((state) => state.nodes);
-  const edges = useGpuStore((state) => state.edges);
-  
-  // Find nodes connected to the output tree
-  const outputNode = nodes.find(n => n.type === 'outputNode' || n.data.type === 'output');
-  const connectedNodeIds = new Set<string>();
-  
-  if (outputNode) {
-    const queue = [outputNode.id];
-    while(queue.length > 0) {
-      const current = queue.shift()!;
-      connectedNodeIds.add(current);
-      // find all edges where target is current
-      const incoming = edges.filter(e => e.target === current);
-      for (const edge of incoming) {
-        if (!connectedNodeIds.has(edge.source)) {
-          queue.push(edge.source);
-        }
-      }
-    }
-  }
-
-  // Only render mesh nodes that are connected to the output
-  const meshNodes = nodes.filter(n => (n.type === 'mesh' || n.data.type === 'mesh') && connectedNodeIds.has(n.id));
-
   return (
     <div className="w-full h-full relative">
       <Canvas camera={{ position: [10, 10, 10], fov: 50 }}>
@@ -97,27 +92,6 @@ export function GpuSceneViewer() {
         
         <RaymarchQuad />
         
-        {meshNodes.map((node) => {
-          const data = node.data as any;
-          if (!data.geometry) return null;
-          return (
-            <mesh 
-              key={node.id} 
-              geometry={data.geometry} 
-              position={data.position ? new THREE.Vector3(...data.position) : new THREE.Vector3()}
-              scale={data.scale || 1}
-            >
-              <meshStandardMaterial 
-                color={data.color || '#f97316'} 
-                roughness={0.4} 
-                metalness={0.1}
-                transparent={true}
-                opacity={0.8}
-              />
-            </mesh>
-          );
-        })}
-
         <OrbitControls makeDefault />
       </Canvas>
     </div>

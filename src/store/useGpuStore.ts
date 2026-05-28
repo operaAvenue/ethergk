@@ -25,6 +25,10 @@ export interface MeshNodeData extends BaseNodeData {
   position: [number, number, number];
   scale: number;
   color?: string;
+  // Texture baking for GPU Raymarching
+  sdfTexture?: THREE.Data3DTexture;
+  bboxMin?: [number, number, number];
+  bboxMax?: [number, number, number];
 }
 
 export interface BooleanNodeData extends BaseNodeData {
