@@ -3,7 +3,7 @@
 import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useStore, AppNode } from '@/store/useStore';
-import { OutputNode, PrimitiveNode, BooleanNode, LatticeNode, MeshNode, ModifierNode, TransformNode, DeformNode, RepeatNode, MorphNode } from './EditorNodes';
+import { OutputNode, PrimitiveNode, BooleanNode, LatticeNode, MeshNode, ModifierNode, TransformNode, DeformNode, RepeatNode, MorphNode, SymmetryNode } from './EditorNodes';
 import { useMemo, useState, useCallback } from 'react';
 
 // @ts-ignore
@@ -16,6 +16,7 @@ const nodeTypes = {
   modifierNode: ModifierNode,
   transformNode: TransformNode,
   deformNode: DeformNode,
+  symmetryNode: SymmetryNode,
   repeatNode: RepeatNode,
   morphNode: MorphNode,
 };
@@ -97,6 +98,12 @@ export function NodeEditor() {
           className="bg-pink-900/50 hover:bg-pink-800/50 border border-pink-700 text-pink-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
         >
           + Deform
+        </button>
+        <button 
+          onClick={() => addNode({ id: 'sym_' + Date.now(), type: 'symmetryNode', position: { x: 200, y: 350 }, data: { type: 'symmetry', name: 'Symmetry', symType: 'symX', slices: 6 } })}
+          className="bg-emerald-900/50 hover:bg-emerald-800/50 border border-emerald-700 text-emerald-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+        >
+          + Symmetry
         </button>
         <button 
           onClick={() => addNode({ id: 'rep_' + Date.now(), type: 'repeatNode', position: { x: 200, y: 350 }, data: { type: 'repeat', name: 'Repeat', spacing: [5,0,0] } })}

@@ -147,3 +147,121 @@ export function opRepeat(p: THREE.Vector3, spacing: THREE.Vector3): THREE.Vector
 export function opMorph(d1: number, d2: number, amount: number): number {
   return d1 * (1.0 - amount) + d2 * amount;
 }
+
+// --- NEW LATTICES & TEXTURES (10) ---
+
+export function sdLidinoid(p: THREE.Vector3): number {
+  return 0.5 * (Math.sin(2*p.x)*Math.cos(p.y)*Math.sin(p.z) + Math.sin(2*p.y)*Math.cos(p.z)*Math.sin(p.x) + Math.sin(2*p.z)*Math.cos(p.x)*Math.sin(p.y)) 
+       - 0.5 * (Math.cos(2*p.x)*Math.cos(2*p.y) + Math.cos(2*p.y)*Math.cos(2*p.z) + Math.cos(2*p.z)*Math.cos(2*p.x)) + 0.15;
+}
+
+export function sdSchwarzH(p: THREE.Vector3): number {
+  return Math.cos(p.x)*Math.cos(p.y) + Math.cos(p.y)*Math.cos(p.z) + Math.cos(p.z)*Math.cos(p.x) - Math.sin(p.x)*Math.sin(p.y)*Math.sin(p.z);
+}
+
+export function sdGrid(p: THREE.Vector3): number {
+  return Math.cos(p.x) + Math.cos(p.y) + Math.cos(p.z);
+}
+
+export function sdHoneycomb(p: THREE.Vector3): number {
+  return Math.cos(p.x) + Math.cos(p.x/2 + p.y*0.866) + Math.cos(p.x/2 - p.y*0.866);
+}
+
+export function sdOctet(p: THREE.Vector3): number {
+  return Math.abs(Math.cos(p.x)*Math.cos(p.y)) + Math.abs(Math.cos(p.y)*Math.cos(p.z)) + Math.abs(Math.cos(p.z)*Math.cos(p.x)) - 1.0;
+}
+
+export function sdSineWave(p: THREE.Vector3): number {
+  return Math.sin(p.x) * Math.sin(p.y) * Math.sin(p.z);
+}
+
+export function sdFoam(p: THREE.Vector3): number {
+  const cx = Math.cos(p.x);
+  const cy = Math.cos(p.y);
+  const cz = Math.cos(p.z);
+  return cx*cy + cy*cz + cz*cx + 0.5;
+}
+
+export function sdFractalNoise(p: THREE.Vector3): number {
+  let f = Math.sin(p.x)*Math.cos(p.y)*Math.sin(p.z);
+  f += 0.5 * Math.sin(2*p.x)*Math.cos(2*p.y)*Math.sin(2*p.z);
+  f += 0.25 * Math.sin(4*p.x)*Math.cos(4*p.y)*Math.sin(4*p.z);
+  return f;
+}
+
+export function sdCylindricalGrid(p: THREE.Vector3): number {
+  return Math.min(
+    Math.cos(p.x) + Math.cos(p.y),
+    Math.min(Math.cos(p.y) + Math.cos(p.z), Math.cos(p.z) + Math.cos(p.x))
+  );
+}
+
+export function sdTubularGyroid(p: THREE.Vector3): number {
+  const g = Math.sin(p.x)*Math.cos(p.y) + Math.sin(p.y)*Math.cos(p.z) + Math.sin(p.z)*Math.cos(p.x);
+  return Math.abs(g) - 0.2;
+}
+
+// --- NEW DEFORMERS & SYMMETRY (10) ---
+
+export function opTaper(p: THREE.Vector3, strength: number): THREE.Vector3 {
+  const s = 1.0 + p.y * strength;
+  return new THREE.Vector3(p.x / s, p.y, p.z / s); 
+}
+
+export function opBend(p: THREE.Vector3, strength: number): THREE.Vector3 {
+  const c = Math.cos(strength * p.y);
+  const s = Math.sin(strength * p.y);
+  const x = p.x * c - p.y * s;
+  const y = p.x * s + p.y * c;
+  return new THREE.Vector3(x, y, p.z);
+}
+
+export function opQuantize(p: THREE.Vector3, step: number): THREE.Vector3 {
+  if (step <= 0) return p;
+  return new THREE.Vector3(
+    Math.round(p.x / step) * step,
+    Math.round(p.y / step) * step,
+    Math.round(p.z / step) * step
+  );
+}
+
+export function opRipple(p: THREE.Vector3, freq: number, amp: number): THREE.Vector3 {
+  return new THREE.Vector3(
+    p.x,
+    p.y + Math.sin(p.x * freq) * amp + Math.cos(p.z * freq) * amp,
+    p.z
+  );
+}
+
+export function opSymX(p: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(Math.abs(p.x), p.y, p.z);
+}
+
+export function opSymY(p: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(p.x, Math.abs(p.y), p.z);
+}
+
+export function opSymZ(p: THREE.Vector3): THREE.Vector3 {
+  return new THREE.Vector3(p.x, p.y, Math.abs(p.z));
+}
+
+export function opSymRadial(p: THREE.Vector3, slices: number): THREE.Vector3 {
+  if (slices <= 0) return p;
+  const a = Math.atan2(p.x, p.z);
+  const r = Math.sqrt(p.x*p.x + p.z*p.z);
+  const sliceAngle = (Math.PI * 2.0) / slices;
+  const a2 = (a % sliceAngle) - (sliceAngle / 2.0);
+  return new THREE.Vector3(Math.sin(a2)*r, p.y, Math.cos(a2)*r);
+}
+
+export function opElongateX(p: THREE.Vector3, length: number): THREE.Vector3 {
+  const q = p.clone();
+  q.x -= Math.max(-length, Math.min(length, p.x));
+  return q;
+}
+
+export function opElongateY(p: THREE.Vector3, length: number): THREE.Vector3 {
+  const q = p.clone();
+  q.y -= Math.max(-length, Math.min(length, p.y));
+  return q;
+}

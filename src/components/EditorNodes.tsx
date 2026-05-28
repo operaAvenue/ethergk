@@ -158,12 +158,28 @@ export function LatticeNode(props: NodeProps<any>) {
         onChange={(e) => updateNodeData(props.id, { pattern: e.target.value as any })}
         className="w-full bg-zinc-950 text-zinc-300 p-2 rounded-lg border border-zinc-800 outline-none mb-1 text-xs nodrag"
       >
-        <option value="gyroid">Gyroid</option>
-        <option value="schwarzP">Schwarz P</option>
-        <option value="diamond">Diamond</option>
-        <option value="neovius">Neovius</option>
-        <option value="iwp">Schoen I-WP</option>
-        <option value="frd">Schoen F-RD</option>
+        <optgroup label="TPMS Structures">
+          <option value="gyroid">Gyroid</option>
+          <option value="schwarzP">Schwarz P</option>
+          <option value="diamond">Diamond</option>
+          <option value="neovius">Neovius</option>
+          <option value="iwp">Schoen I-WP</option>
+          <option value="frd">Schoen F-RD</option>
+          <option value="lidinoid">Lidinoid</option>
+          <option value="schwarzH">Schwarz H (Hex)</option>
+          <option value="tubularGyroid">Tubular Gyroid</option>
+        </optgroup>
+        <optgroup label="Lattices & Infill">
+          <option value="grid">3D Grid</option>
+          <option value="honeycomb">Honeycomb</option>
+          <option value="octet">Octet Truss</option>
+          <option value="cylindricalGrid">Cylindrical Grid</option>
+        </optgroup>
+        <optgroup label="Textures & Pores">
+          <option value="foam">Spherical Foam</option>
+          <option value="fractalNoise">Fractal Noise</option>
+          <option value="sineWave">Sine Ripple</option>
+        </optgroup>
       </select>
       <div className="space-y-1">
         <label className="text-[10px] text-zinc-500 flex justify-between items-center">
@@ -256,6 +272,14 @@ export function DeformNode(props: NodeProps<any>) {
         className="w-full bg-zinc-950 text-zinc-300 p-2 rounded-lg border border-zinc-800 outline-none mb-1 text-xs nodrag"
       >
         <option value="twist">Twist</option>
+        <option value="taper">Taper</option>
+        <option value="bend">Bend</option>
+        <option value="quantize">Quantize / Pixelate</option>
+        <option value="ripple">Surface Ripple</option>
+        <option value="elongateX">Elongate X</option>
+        <option value="elongateY">Elongate Y</option>
+        <option value="bulge">Bulge</option>
+        <option value="pinch">Pinch</option>
       </select>
 
       <div className="space-y-1">
@@ -314,6 +338,36 @@ export function MorphNode(props: NodeProps<any>) {
         </label>
         <input type="range" min="0.0" max="1.0" step="0.01" value={num(data.amount || 0)} onChange={(e) => updateNodeData(props.id, { amount: parseFloat(e.target.value) })} className="w-full accent-violet-500 nodrag" />
       </div>
+    </NodeWrapper>
+  );
+}
+
+export function SymmetryNode(props: NodeProps<any>) {
+  const data = props.data as SymmetryNodeData;
+  const updateNodeData = useStore(state => state.updateNodeData);
+
+  return (
+    <NodeWrapper title="Symmetry" icon={<Move className="w-4 h-4 text-emerald-400" />}>
+      <select 
+        value={data.symType || 'symX'}
+        onChange={(e) => updateNodeData(props.id, { symType: e.target.value as any })}
+        className="w-full bg-zinc-950 text-zinc-300 p-2 rounded-lg border border-zinc-800 outline-none mb-1 text-xs nodrag"
+      >
+        <option value="symX">Mirror X</option>
+        <option value="symY">Mirror Y</option>
+        <option value="symZ">Mirror Z</option>
+        <option value="radial">Radial / Kaleidoscope</option>
+      </select>
+
+      {data.symType === 'radial' && (
+        <div className="space-y-1 mt-2">
+          <label className="text-[10px] text-zinc-500 flex justify-between items-center">
+            Slices 
+            <input type="number" step="1" value={num(data.slices || 6)} onChange={(e) => updateNodeData(props.id, { slices: parseInt(e.target.value) })} className="w-12 bg-zinc-950 border border-zinc-800 rounded px-1 text-center nodrag" />
+          </label>
+          <input type="range" min="2" max="32" step="1" value={num(data.slices || 6)} onChange={(e) => updateNodeData(props.id, { slices: parseInt(e.target.value) })} className="w-full accent-emerald-500 nodrag" />
+        </div>
+      )}
     </NodeWrapper>
   );
 }

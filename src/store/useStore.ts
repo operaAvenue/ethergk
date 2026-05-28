@@ -36,7 +36,7 @@ export interface BooleanNodeData extends BaseNodeData {
 
 export interface LatticeNodeData extends BaseNodeData {
   type: 'lattice';
-  pattern: 'gyroid' | 'schwarzP' | 'diamond' | 'neovius' | 'iwp' | 'frd';
+  pattern: 'gyroid' | 'schwarzP' | 'diamond' | 'neovius' | 'iwp' | 'frd' | 'lidinoid' | 'schwarzH' | 'grid' | 'honeycomb' | 'octet' | 'sineWave' | 'foam' | 'fractalNoise' | 'cylindricalGrid' | 'tubularGyroid';
   scale: number;
   thickness: number;
   color?: string;
@@ -61,8 +61,14 @@ export interface TransformNodeData extends BaseNodeData {
 
 export interface DeformNodeData extends BaseNodeData {
   type: 'deform';
-  deformType: 'twist';
+  deformType: 'twist' | 'taper' | 'bend' | 'quantize' | 'ripple' | 'elongateX' | 'elongateY';
   strength: number;
+}
+
+export interface SymmetryNodeData extends BaseNodeData {
+  type: 'symmetry';
+  symType: 'symX' | 'symY' | 'symZ' | 'radial';
+  slices: number;
 }
 
 export interface RepeatNodeData extends BaseNodeData {
@@ -75,7 +81,7 @@ export interface MorphNodeData extends BaseNodeData {
   amount: number;
 }
 
-export type LogicNodeData = PrimitiveNodeData | BooleanNodeData | LatticeNodeData | MeshNodeData | ModifierNodeData | TransformNodeData | DeformNodeData | RepeatNodeData | MorphNodeData | OutputNodeData;
+export type LogicNodeData = PrimitiveNodeData | BooleanNodeData | LatticeNodeData | MeshNodeData | ModifierNodeData | TransformNodeData | DeformNodeData | RepeatNodeData | MorphNodeData | OutputNodeData | SymmetryNodeData;
 export type AppNode = Node<LogicNodeData>;
 
 interface AppState {

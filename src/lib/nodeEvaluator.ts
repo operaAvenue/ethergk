@@ -136,8 +136,19 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
             case 'neovius': latticeDist = sdf.sdNeovius(p, data.scale, data.thickness); break;
             case 'iwp': latticeDist = sdf.sdIWP(p, data.scale, data.thickness); break;
             case 'frd': latticeDist = sdf.sdFRD(p, data.scale, data.thickness); break;
+            case 'lidinoid': latticeDist = (Math.abs(sdf.sdLidinoid(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
+            case 'schwarzH': latticeDist = (Math.abs(sdf.sdSchwarzH(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
+            case 'grid': latticeDist = (sdf.sdGrid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'honeycomb': latticeDist = (sdf.sdHoneycomb(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'octet': latticeDist = (sdf.sdOctet(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'sineWave': latticeDist = (Math.abs(sdf.sdSineWave(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
+            case 'foam': latticeDist = (sdf.sdFoam(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'fractalNoise': latticeDist = (sdf.sdFractalNoise(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'cylindricalGrid': latticeDist = (sdf.sdCylindricalGrid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'tubularGyroid': latticeDist = (sdf.sdTubularGyroid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
             case 'gyroid':
             default: latticeDist = sdf.sdGyroid(p, data.scale, data.thickness); break;
+
           }
           // Infill the base with lattice
           const finalDist = sdf.opIntersect(rBase.dist, latticeDist);
@@ -203,8 +214,31 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
         const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
         return (p: THREE.Vector3) => {
           let deformedP = p.clone();
-          if (data.deformType === 'twist') deformedP = sdf.opTwist(deformedP, data.strength || 0);
+          switch(data.deformType) {
+            case 'twist': deformedP = sdf.opTwist(deformedP, data.strength || 0); break;
+            case 'taper': deformedP = sdf.opTaper(deformedP, data.strength || 0); break;
+            case 'bend': deformedP = sdf.opBend(deformedP, data.strength || 0); break;
+            case 'quantize': deformedP = sdf.opQuantize(deformedP, data.strength || 0); break;
+            case 'ripple': deformedP = sdf.opRipple(deformedP, (data.strength || 0) * 2, Math.abs(data.strength || 0) * 0.5); break;
+            case 'elongateX': deformedP = sdf.opElongateX(deformedP, Math.abs(data.strength || 0)); break;
+            case 'elongateY': deformedP = sdf.opElongateY(deformedP, Math.abs(data.strength || 0)); break;
+          }
           return baseFunc(deformedP);
+        };
+      }
+
+      case 'symmetry': {
+        const baseNode = getConnectedNode(node.id, 'base') || getConnectedNode(node.id);
+        const baseFunc = baseNode ? compileNode(baseNode) : () => ({ dist: 10000, color: defaultMissingColor });
+        return (p: THREE.Vector3) => {
+          let symP = p.clone();
+          switch(data.symType) {
+            case 'symX': symP = sdf.opSymX(symP); break;
+            case 'symY': symP = sdf.opSymY(symP); break;
+            case 'symZ': symP = sdf.opSymZ(symP); break;
+            case 'radial': symP = sdf.opSymRadial(symP, data.slices || 6); break;
+          }
+          return baseFunc(symP);
         };
       }
 
