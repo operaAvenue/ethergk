@@ -3,11 +3,12 @@
 import { SceneViewer } from '@/components/SceneViewer';
 import { UIController } from '@/components/UIController';
 import { NodeEditor } from '@/components/NodeEditor';
+import { SidebarEditor } from '@/components/SidebarEditor';
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef, useState } from 'react';
 
 export default function Home() {
-  const { layoutSplitRatio, layoutIsVertical, layoutIsSwapped, setLayoutSplitRatio } = useStore();
+  const { layoutSplitRatio, layoutIsVertical, layoutIsSwapped, setLayoutSplitRatio, uiMode } = useStore();
   const containerRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
 
@@ -58,8 +59,8 @@ export default function Home() {
     <div key="3d" className="w-full h-full rounded-xl overflow-hidden border border-zinc-800 shadow-2xl relative">
       <SceneViewer />
     </div>,
-    <div key="node" className="w-full h-full rounded-xl overflow-hidden border border-zinc-800 shadow-2xl relative">
-      <NodeEditor />
+    <div key="node" className="w-full h-full rounded-xl overflow-hidden shadow-2xl relative">
+      {uiMode === 'sidebar' ? <SidebarEditor /> : <NodeEditor />}
     </div>
   ];
 

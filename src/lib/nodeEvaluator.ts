@@ -130,25 +130,25 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
         return (p: THREE.Vector3) => {
           const rBase = baseFunc(p);
           let latticeDist = 10000;
+          const scale = 1.0 / (data.scale || 1.0);
           switch (data.pattern) {
-            case 'schwarzP': latticeDist = sdf.sdSchwarzP(p, data.scale, data.thickness); break;
-            case 'diamond': latticeDist = sdf.sdDiamond(p, data.scale, data.thickness); break;
-            case 'neovius': latticeDist = sdf.sdNeovius(p, data.scale, data.thickness); break;
-            case 'iwp': latticeDist = sdf.sdIWP(p, data.scale, data.thickness); break;
-            case 'frd': latticeDist = sdf.sdFRD(p, data.scale, data.thickness); break;
-            case 'lidinoid': latticeDist = (Math.abs(sdf.sdLidinoid(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
-            case 'schwarzH': latticeDist = (Math.abs(sdf.sdSchwarzH(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
-            case 'grid': latticeDist = (sdf.sdGrid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'honeycomb': latticeDist = (sdf.sdHoneycomb(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'octet': latticeDist = (sdf.sdOctet(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'sineWave': latticeDist = (Math.abs(sdf.sdSineWave(p.clone().multiplyScalar(data.scale))) - data.thickness) / data.scale; break;
-            case 'foam': latticeDist = (sdf.sdFoam(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'fractalNoise': latticeDist = (sdf.sdFractalNoise(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'cylindricalGrid': latticeDist = (sdf.sdCylindricalGrid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
-            case 'tubularGyroid': latticeDist = (sdf.sdTubularGyroid(p.clone().multiplyScalar(data.scale)) - data.thickness) / data.scale; break;
+            case 'schwarzP': latticeDist = sdf.sdSchwarzP(p, scale, data.thickness); break;
+            case 'diamond': latticeDist = sdf.sdDiamond(p, scale, data.thickness); break;
+            case 'neovius': latticeDist = sdf.sdNeovius(p, scale, data.thickness); break;
+            case 'iwp': latticeDist = sdf.sdIWP(p, scale, data.thickness); break;
+            case 'frd': latticeDist = sdf.sdFRD(p, scale, data.thickness); break;
+            case 'lidinoid': latticeDist = (Math.abs(sdf.sdLidinoid(p.clone().multiplyScalar(scale))) - data.thickness) / scale; break;
+            case 'schwarzH': latticeDist = (Math.abs(sdf.sdSchwarzH(p.clone().multiplyScalar(scale))) - data.thickness) / scale; break;
+            case 'grid': latticeDist = (sdf.sdGrid(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'honeycomb': latticeDist = (sdf.sdHoneycomb(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'octet': latticeDist = (sdf.sdOctet(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'sineWave': latticeDist = (Math.abs(sdf.sdSineWave(p.clone().multiplyScalar(scale))) - data.thickness) / scale; break;
+            case 'foam': latticeDist = (sdf.sdFoam(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'fractalNoise': latticeDist = (sdf.sdFractalNoise(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'cylindricalGrid': latticeDist = (sdf.sdCylindricalGrid(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'tubularGyroid': latticeDist = (sdf.sdTubularGyroid(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
             case 'gyroid':
-            default: latticeDist = sdf.sdGyroid(p, data.scale, data.thickness); break;
-
+            default: latticeDist = sdf.sdGyroid(p, scale, data.thickness); break;
           }
           // Infill the base with lattice
           const finalDist = sdf.opIntersect(rBase.dist, latticeDist);
