@@ -1,5 +1,5 @@
 import { Handle, Position, NodeProps } from '@xyflow/react';
-import { useGpuStore, PrimitiveNodeData, BooleanNodeData, LatticeNodeData, MeshNodeData, ModifierNodeData, TransformNodeData, DeformNodeData, RepeatNodeData, MorphNodeData } from '@/store/useGpuStore';
+import { useGpuStore, PrimitiveNodeData, BooleanNodeData, LatticeNodeData, MeshNodeData, ModifierNodeData, TransformNodeData, DeformNodeData, RepeatNodeData, MorphNodeData, SymmetryNodeData } from '@/store/useGpuStore';
 import { Box, Circle, Cylinder, Plus, Waves, LayoutTemplate, Move, Rotate3D, AlignHorizontalSpaceAround, Blend } from 'lucide-react';
 
 const num = (v: any) => (typeof v === 'number' && Number.isNaN(v)) ? '' : v;

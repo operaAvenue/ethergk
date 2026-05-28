@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as THREE from 'three';
 import { addEdge, applyNodeChanges, applyEdgeChanges, Connection, Edge, EdgeChange, Node, NodeChange } from '@xyflow/react';
 
-export type NodeType = 'primitive' | 'boolean' | 'offset' | 'lattice' | 'mesh' | 'modifier' | 'transform' | 'deform' | 'repeat' | 'morph' | 'output';
+export type NodeType = 'primitive' | 'boolean' | 'offset' | 'lattice' | 'mesh' | 'modifier' | 'transform' | 'deform' | 'repeat' | 'morph' | 'symmetry' | 'output';
 
 export interface BaseNodeData extends Record<string, unknown> {
   type: NodeType;
@@ -93,6 +93,7 @@ interface AppState {
   resolution: number;
   gridSize: number;
   modifiedGeometry: THREE.BufferGeometry | null;
+  glslShader: string;
   needsRebuild: boolean; // Flag to tell the voxelizer to rebuild
   
   // Layout State
