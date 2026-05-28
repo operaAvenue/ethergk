@@ -130,9 +130,9 @@ export function compileGraphToGLSL(): string {
     
     switch (node.data.type) {
       case 'primitive':
-        if (d.shape === 'box') return \`sdBox(\${pointVar} - vec3(\${d.position.join(',')}), vec3(\${d.scale}))\`;
-        if (d.shape === 'sphere') return \`sdSphere(\${pointVar} - vec3(\${d.position.join(',')}), \${d.scale})\`;
-        if (d.shape === 'cylinder') return \`sdCylinder(\${pointVar} - vec3(\${d.position.join(',')}), vec3(\${d.scale}, \${d.scale}, \${d.scale}))\`;
+        if (d.shape === 'box') return `sdBox(${pointVar} - vec3(${d.position.join(',')}), vec3(${d.scale}))`;
+        if (d.shape === 'sphere') return `sdSphere(${pointVar} - vec3(${d.position.join(',')}), ${d.scale})`;
+        if (d.shape === 'cylinder') return `sdCylinder(${pointVar} - vec3(${d.position.join(',')}), vec3(${d.scale}, ${d.scale}, ${d.scale}))`;
         return '10000.0';
 
       case 'boolean': {
@@ -143,12 +143,12 @@ export function compileGraphToGLSL(): string {
         const d2 = shapeB ? generateNodeCode(shapeB, pointVar) : '10000.0';
         
         switch (d.operation) {
-          case 'union': return \`opUnion(\${d1}, \${d2})\`;
-          case 'subtract': return \`opSubtract(\${d1}, \${d2})\`;
-          case 'intersect': return \`opIntersect(\${d1}, \${d2})\`;
-          case 'smoothUnion': return \`opSmoothUnion(\${d1}, \${d2}, \${d.smoothness})\`;
-          case 'smoothSubtract': return \`opSmoothSubtract(\${d1}, \${d2}, \${d.smoothness})\`;
-          case 'smoothIntersect': return \`opSmoothIntersect(\${d1}, \${d2}, \${d.smoothness})\`;
+          case 'union': return `opUnion(${d1}, ${d2})`;
+          case 'subtract': return `opSubtract(${d1}, ${d2})`;
+          case 'intersect': return `opIntersect(${d1}, ${d2})`;
+          case 'smoothUnion': return `opSmoothUnion(${d1}, ${d2}, ${d.smoothness})`;
+          case 'smoothSubtract': return `opSmoothSubtract(${d1}, ${d2}, ${d.smoothness})`;
+          case 'smoothIntersect': return `opSmoothIntersect(${d1}, ${d2}, ${d.smoothness})`;
           default: return d1;
         }
       }
@@ -158,13 +158,13 @@ export function compileGraphToGLSL(): string {
         const baseCode = base ? generateNodeCode(base, pointVar) : '10000.0';
         let latCode = '10000.0';
         switch (d.pattern) {
-          case 'gyroid': latCode = \`sdGyroid(\${pointVar}, \${d.scale}, \${d.thickness})\`; break;
-          case 'schwarzP': latCode = \`sdSchwarzP(\${pointVar}, \${d.scale}, \${d.thickness})\`; break;
-          case 'diamond': latCode = \`sdDiamond(\${pointVar}, \${d.scale}, \${d.thickness})\`; break;
-          case 'grid': latCode = \`sdGrid(\${pointVar}, \${d.scale}, \${d.thickness})\`; break;
-          default: latCode = \`sdGyroid(\${pointVar}, \${d.scale}, \${d.thickness})\`; break;
+          case 'gyroid': latCode = `sdGyroid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
+          case 'schwarzP': latCode = `sdSchwarzP(${pointVar}, ${d.scale}, ${d.thickness})`; break;
+          case 'diamond': latCode = `sdDiamond(${pointVar}, ${d.scale}, ${d.thickness})`; break;
+          case 'grid': latCode = `sdGrid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
+          default: latCode = `sdGyroid(${pointVar}, ${d.scale}, ${d.thickness})`; break;
         }
-        return \`opIntersect(\${baseCode}, \${latCode})\`;
+        return `opIntersect(${baseCode}, ${latCode})`;
       }
 
       case 'transform': {
@@ -183,7 +183,7 @@ export function compileGraphToGLSL(): string {
         
         // Very basic inline transform (translate only for now to avoid huge inline strings)
         // A better way is to declare variables, but let's do simple translate:
-        const tPoint = \`(\${pointVar} - vec3(\${tx}, \${ty}, \${tz}))\`;
+        const tPoint = `(${pointVar} - vec3(${tx}, ${ty}, ${tz}))`;
         
         return generateNodeCode(base, tPoint);
       }
@@ -192,15 +192,15 @@ export function compileGraphToGLSL(): string {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
         if (!base) return '10000.0';
         let dp = pointVar;
-        if (d.deformType === 'twist') dp = \`opTwist(\${pointVar}, \${d.strength.toFixed(3)})\`;
-        if (d.deformType === 'taper') dp = \`opTaper(\${pointVar}, \${d.strength.toFixed(3)})\`;
+        if (d.deformType === 'twist') dp = `opTwist(${pointVar}, ${d.strength.toFixed(3)})`;
+        if (d.deformType === 'taper') dp = `opTaper(${pointVar}, ${d.strength.toFixed(3)})`;
         return generateNodeCode(base, dp);
       }
 
       case 'repeat': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
         if (!base) return '10000.0';
-        const dp = \`opRepeat(\${pointVar}, vec3(\${d.spacing.map((v:any)=>v.toFixed(3)).join(',')}))\`;
+        const dp = `opRepeat(${pointVar}, vec3(${d.spacing.map((v:any)=>v.toFixed(3)).join(',')}))`;
         return generateNodeCode(base, dp);
       }
 
@@ -208,10 +208,10 @@ export function compileGraphToGLSL(): string {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
         if (!base) return '10000.0';
         let dp = pointVar;
-        if (d.symType === 'symX') dp = \`opSymX(\${pointVar})\`;
-        if (d.symType === 'symY') dp = \`opSymY(\${pointVar})\`;
-        if (d.symType === 'symZ') dp = \`opSymZ(\${pointVar})\`;
-        if (d.symType === 'radial') dp = \`opSymRadial(\${pointVar}, \${(d.slices||6).toFixed(1)})\`;
+        if (d.symType === 'symX') dp = `opSymX(${pointVar})`;
+        if (d.symType === 'symY') dp = `opSymY(${pointVar})`;
+        if (d.symType === 'symZ') dp = `opSymZ(${pointVar})`;
+        if (d.symType === 'radial') dp = `opSymRadial(${pointVar}, ${(d.slices||6).toFixed(1)})`;
         return generateNodeCode(base, dp);
       }
       
@@ -232,12 +232,12 @@ export function compileGraphToGLSL(): string {
     const inputs = finalInputNodes.map(n => generateNodeCode(n, 'p'));
     let combined = inputs[0];
     for (let i = 1; i < inputs.length; i++) {
-      combined = \`opUnion(\${combined}, \${inputs[i]})\`;
+      combined = `opUnion(${combined}, ${inputs[i]})`;
     }
-    mapBody = \`return \${combined};\`;
+    mapBody = `return ${combined};`;
   }
 
-  const shader = \`
+  const shader = `
   varying vec3 vPosition;
   varying vec2 vUv;
   uniform vec3 cameraPos;
@@ -246,10 +246,10 @@ export function compileGraphToGLSL(): string {
   uniform vec3 cameraRight;
   uniform vec2 resolution;
 
-  \${SDF_LIBRARY}
+  ${SDF_LIBRARY}
 
   float map(vec3 p) {
-      \${mapBody}
+      ${mapBody}
   }
 
   vec3 getNormal(vec3 p) {
@@ -302,7 +302,7 @@ export function compileGraphToGLSL(): string {
 
       gl_FragColor = vec4(col, 1.0);
   }
-  \`;
+  `;
 
   return shader;
 }

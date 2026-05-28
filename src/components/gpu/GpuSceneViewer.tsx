@@ -6,7 +6,7 @@ import { useGpuStore } from '@/store/useGpuStore';
 import * as THREE from 'three';
 import { useRef, useMemo, useEffect } from 'react';
 
-const vertexShader = \`
+const vertexShader = `
 varying vec3 vPosition;
 varying vec2 vUv;
 void main() {
@@ -14,7 +14,7 @@ void main() {
   vUv = uv;
   gl_Position = vec4(position, 1.0);
 }
-\`;
+`;
 
 function RaymarchQuad() {
   const glslShader = useGpuStore((state) => state.glslShader);
