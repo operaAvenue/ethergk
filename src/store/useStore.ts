@@ -168,7 +168,7 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       nodes: get().nodes.map(node => {
         if (node.id === id) {
-          return { ...node, data: { ...node.data, ...data } };
+          return { ...node, data: { ...node.data, ...data } as any };
         }
         return node;
       })
