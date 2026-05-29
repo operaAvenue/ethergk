@@ -30,6 +30,8 @@ export interface MeshNodeData extends BaseNodeData {
   bboxMin?: [number, number, number];
   bboxMax?: [number, number, number];
   stlBase64?: string; // Embedded STL data for saving/loading
+  fileBase64?: string; // Embedded generic file data for saving/loading
+  fileExtension?: string; // 'stl' | 'obj' | 'fbx'
 }
 
 export interface BooleanNodeData extends BaseNodeData {
@@ -41,7 +43,12 @@ export interface BooleanNodeData extends BaseNodeData {
 
 export interface LatticeNodeData extends BaseNodeData {
   type: 'lattice';
-  pattern: 'gyroid' | 'schwarzP' | 'diamond' | 'neovius' | 'iwp' | 'frd' | 'lidinoid' | 'schwarzH' | 'grid' | 'honeycomb' | 'octet' | 'sineWave' | 'foam' | 'fractalNoise' | 'cylindricalGrid' | 'tubularGyroid';
+  pattern: 
+    | 'gyroid' | 'schwarzP' | 'diamond' | 'neovius' | 'iwp' | 'frd' | 'lidinoid' | 'schwarzH' 
+    | 'grid' | 'honeycomb' | 'octet' | 'sineWave' | 'foam' | 'fractalNoise' | 'cylindricalGrid' | 'tubularGyroid'
+    | 'fischerKochS' | 'fischerKochD' | 'splitP' | 'gPrime' | 'iwp2' | 'carlyle' | 'crossedDecagons' 
+    | 'kelvin' | 'kagome' | 'waffle' | 'chiral' | 'radialGrid' | 'herringbone' | 'weairePhelan' 
+    | 'boxFrame' | 'octahedral';
   scale: number;
   thickness: number;
   color?: string;
@@ -66,7 +73,7 @@ export interface TransformNodeData extends BaseNodeData {
 
 export interface DeformNodeData extends BaseNodeData {
   type: 'deform';
-  deformType: 'twist' | 'taper' | 'bend' | 'quantize' | 'ripple' | 'elongateX' | 'elongateY';
+  deformType: 'twist' | 'taper' | 'bend' | 'quantize' | 'ripple' | 'elongateX' | 'elongateY' | 'bulge' | 'pinch';
   strength: number;
 }
 
@@ -106,6 +113,24 @@ interface AppState {
   layoutIsVertical: boolean;
   layoutIsSwapped: boolean;
   
+  // Visualization Settings
+  showGround: boolean;
+  showShadows: boolean;
+  showAO: boolean;
+  showWireframe: boolean;
+  lightDir: [number, number, number];
+  lightIntensity: number;
+  ambientIntensity: number;
+  setVisualizationSettings: (settings: Partial<{
+    showGround: boolean;
+    showShadows: boolean;
+    showAO: boolean;
+    showWireframe: boolean;
+    lightDir: [number, number, number];
+    lightIntensity: number;
+    ambientIntensity: number;
+  }>) => void;
+
   // React Flow Actions
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
@@ -152,6 +177,15 @@ export const useGpuStore = create<AppState>((set, get) => ({
   layoutIsVertical: true,
   layoutIsSwapped: false,
   
+  showGround: true,
+  showShadows: true,
+  showAO: true,
+  showWireframe: false,
+  lightDir: [10, 10, 5],
+  lightIntensity: 1.0,
+  ambientIntensity: 0.3,
+  setVisualizationSettings: (settings) => set((state) => ({ ...state, ...settings })),
+
   uiMode: 'nodes',
   setUiMode: (mode) => set({ uiMode: mode }),
   

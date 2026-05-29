@@ -4,6 +4,8 @@ import { useStore } from '@/store/useStore';
 import { buildGraphSDF } from '@/lib/nodeEvaluator';
 import { Voxelizer } from '@/lib/voxelizer';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import * as THREE from 'three';
@@ -17,6 +19,42 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 // @ts-ignore
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
+function getMergedGeometryFromGroup(group: THREE.Object3D): THREE.BufferGeometry {
+  const geometries: THREE.BufferGeometry[] = [];
+  group.updateMatrixWorld(true);
+  group.traverse((child) => {
+    if (child instanceof THREE.Mesh) {
+      const geom = child.geometry.clone();
+      geom.applyMatrix4(child.matrixWorld);
+      geometries.push(geom);
+    }
+  });
+  if (geometries.length === 0) {
+    throw new Error("No meshes found in the imported file");
+  }
+  const merged = BufferGeometryUtils.mergeGeometries(geometries, true);
+  geometries.forEach(g => g.dispose());
+  return merged;
+}
+
+function parseFileToGeometry(extension: string, buffer: ArrayBuffer): THREE.BufferGeometry {
+  if (extension === 'stl') {
+    const loader = new STLLoader();
+    return loader.parse(buffer);
+  } else if (extension === 'obj') {
+    const loader = new OBJLoader();
+    const text = new TextDecoder().decode(buffer);
+    const group = loader.parse(text);
+    return getMergedGeometryFromGroup(group);
+  } else if (extension === 'fbx') {
+    const loader = new FBXLoader();
+    const group = loader.parse(buffer, '');
+    return getMergedGeometryFromGroup(group);
+  } else {
+    throw new Error(`Unsupported file extension: ${extension}`);
+  }
+}
 
 export function UIController() {
   const { addNode, resolution, setResolution, setModifiedGeometry, gridSize, needsRebuild } = useStore();
@@ -76,19 +114,20 @@ export function UIController() {
         const project = JSON.parse(e.target?.result as string);
         if (!project.nodes || !project.edges) throw new Error("Invalid project file");
 
-        const loader = new STLLoader();
-
         // Reconstruct heavy objects for mesh nodes
         const reconstructedNodes = project.nodes.map((node: any) => {
-          if ((node.type === 'meshNode' || node.data.type === 'mesh') && node.data.stlBase64) {
+          if ((node.type === 'meshNode' || node.data.type === 'mesh') && (node.data.fileBase64 || node.data.stlBase64)) {
+            const base64Data = node.data.fileBase64 || node.data.stlBase64;
+            const extension = node.data.fileExtension || 'stl';
+
             // Decode base64 to ArrayBuffer
-            const binaryString = atob(node.data.stlBase64);
+            const binaryString = atob(base64Data);
             const bytes = new Uint8Array(binaryString.length);
             for (let i = 0; i < binaryString.length; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             
-            let geometry = loader.parse(bytes.buffer);
+            let geometry = parseFileToGeometry(extension, bytes.buffer);
             
             // Re-apply Auto scale
             geometry.computeBoundingBox();
@@ -116,6 +155,7 @@ export function UIController() {
 
             node.data.geometry = geometry;
             node.data.bvh = geometry.boundsTree;
+            node.data.color = node.data.color || '#f97316';
             node.data.bboxMin = [bboxMin.x, bboxMin.y, bboxMin.z];
             node.data.bboxMax = [bboxMax.x, bboxMax.y, bboxMax.z];
           }
@@ -141,14 +181,15 @@ export function UIController() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'stl';
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const contents = e.target?.result;
       if (contents) {
-        const loader = new STLLoader();
         try {
           const buffer = contents as ArrayBuffer;
-          let geometry = loader.parse(buffer);
+          let geometry = parseFileToGeometry(extension, buffer);
           
           // Convert ArrayBuffer to Base64 for saving
           const uint8Array = new Uint8Array(buffer);
@@ -158,10 +199,9 @@ export function UIController() {
           for (let i = 0; i < uint8Array.length; i += chunkSize) {
             binary += String.fromCharCode.apply(null, Array.from(uint8Array.subarray(i, i + chunkSize)));
           }
-          const stlBase64 = btoa(binary);
+          const fileBase64 = btoa(binary);
           
           // Auto scale to fit within Marching Cubes grid BEFORE merging!
-          // This prevents floating point inaccuracies in huge or tiny STLs from breaking mergeVertices
           geometry.computeBoundingBox();
           const bbox = geometry.boundingBox!;
           const size = new THREE.Vector3();
@@ -174,7 +214,7 @@ export function UIController() {
           geometry.center(); 
           geometry.scale(scaleFactor, scaleFactor, scaleFactor);
 
-          // Now merge vertices with a tolerance suitable for the normalized scale (8.0)
+          // Now merge vertices with a tolerance suitable for the normalized scale
           if (!geometry.index) {
             geometry = BufferGeometryUtils.mergeVertices(geometry, 1e-4);
           }
@@ -196,7 +236,10 @@ export function UIController() {
               bvh: geometry.boundsTree,
               position: [0, 0, 0],
               scale: 1.0,
-              stlBase64: stlBase64
+              color: '#f97316',
+              fileBase64: fileBase64,
+              fileExtension: extension,
+              stlBase64: extension === 'stl' ? fileBase64 : undefined
             }
           });
 
@@ -223,7 +266,8 @@ export function UIController() {
           // Clear input so we can import the same file again
           event.target.value = '';
         } catch (error) {
-          alert("Erro ao ler o arquivo STL.");
+          console.error("Error reading file:", error);
+          alert("Erro ao ler o arquivo 3D.");
           event.target.value = '';
         }
       }
@@ -257,18 +301,19 @@ export function UIController() {
   };
 
   return (
-    <div className="absolute top-4 left-4 right-4 bg-zinc-900/90 backdrop-blur-xl rounded-2xl shadow-xl p-3 border border-zinc-800 text-zinc-100 z-10 flex items-center justify-between">
+    <div className="absolute top-4 left-4 right-4 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800/60 shadow-2xl rounded-2xl p-3 text-zinc-100 z-10 flex items-center justify-between">
       
       <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-fuchsia-500" />
-        <h2 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-400 to-indigo-400">
-          Ether Geometry Kernel
+        <Sparkles className="w-5 h-5 text-amber-500" />
+        <h2 className="text-base font-bold flex items-center">
+          <span className="text-zinc-500 font-semibold tracking-tight">EtherGeometry</span>
+          <span className="text-[#ffb300] font-black tracking-wide pl-0.5">Kernel</span>
         </h2>
       </div>
 
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-3">
-          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
             Voxel Grid: {resolution}^3
           </label>
           <input 
@@ -276,45 +321,45 @@ export function UIController() {
             min="20" max="150" step="10" 
             value={resolution} 
             onChange={(e) => setResolution(parseInt(e.target.value))}
-            className="w-32 accent-fuchsia-500"
+            className="w-32 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
           />
         </div>
 
         <div className="flex gap-2 items-center">
           <button 
             onClick={() => useStore.getState().setUiMode(useStore.getState().uiMode === 'nodes' ? 'sidebar' : 'nodes')}
-            className={`p-2 rounded transition-colors mr-2 ${useStore.getState().uiMode === 'sidebar' ? 'bg-fuchsia-600 text-white' : 'hover:bg-zinc-800 text-zinc-400'}`}
+            className={`p-2 rounded-xl border transition-all duration-200 mr-2 ${useStore.getState().uiMode === 'sidebar' ? 'bg-amber-500/10 border-amber-500/40 text-amber-500' : 'bg-zinc-950 border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200'}`}
             title="Toggle Sidebar Mode"
           >
-            <Columns className="w-5 h-5" />
+            <Columns className="w-4 h-4" />
           </button>
-          <div className="w-px h-6 bg-zinc-800 mx-2"></div>
+          <div className="w-px h-6 bg-zinc-800 mx-1"></div>
 
           <button 
             onClick={() => useStore.getState().setLayoutIsSwapped(!useStore.getState().layoutIsSwapped)}
-            className="p-2 rounded hover:bg-zinc-800 transition-colors"
+            className="p-2 rounded-xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all duration-200"
             title="Swap Panels"
           >
-            <ArrowLeftRight className="w-5 h-5 text-zinc-400" />
+            <ArrowLeftRight className="w-4 h-4" />
           </button>
           <button 
             onClick={() => useStore.getState().setLayoutIsVertical(!useStore.getState().layoutIsVertical)}
-            className="p-2 rounded hover:bg-zinc-800 transition-colors mr-2"
+            className="p-2 rounded-xl bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 transition-all duration-200 mr-2"
             title="Toggle Orientation"
           >
-            {useStore.getState().layoutIsVertical ? <Rows className="w-5 h-5 text-zinc-400" /> : <Columns className="w-5 h-5 text-zinc-400" />}
+            {useStore.getState().layoutIsVertical ? <Rows className="w-4 h-4" /> : <Columns className="w-4 h-4" />}
           </button>
 
           <div className="w-px h-6 bg-zinc-800 mx-1"></div>
 
           <button 
             onClick={handleSaveProject}
-            className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-2 bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all duration-200"
           >
             <Save className="w-4 h-4" /> Save
           </button>
 
-          <label className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer mr-2">
+          <label className="flex items-center gap-2 bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 py-1.5 px-3 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer mr-2">
             <FolderOpen className="w-4 h-4" /> Open
             <input 
               type="file" 
@@ -327,11 +372,11 @@ export function UIController() {
 
           <div className="w-px h-6 bg-zinc-800 mx-1"></div>
 
-          <label className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer">
-            <Upload className="w-4 h-4" /> Import STL
+          <label className="flex items-center gap-2 bg-zinc-950 border border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 py-1.5 px-3.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer">
+            <Upload className="w-4 h-4 text-amber-500" /> Import 3D File
             <input 
               type="file" 
-              accept=".stl" 
+              accept=".stl,.obj,.fbx" 
               className="hidden" 
               onClick={handleInputClick}
               onChange={handleFileUpload} 
@@ -340,7 +385,7 @@ export function UIController() {
           
           <button 
             onClick={handleDownload}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+            className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-zinc-950 py-1.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
           >
             <Download className="w-4 h-4" /> Export STL
           </button>

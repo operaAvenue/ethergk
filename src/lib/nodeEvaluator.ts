@@ -6,8 +6,9 @@ import { Edge } from '@xyflow/react';
 export type SDFResult = { dist: number, color: THREE.Color };
 
 // Compiles a node into a distance function
-export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
-  const { nodes, edges } = useStore.getState();
+export function buildGraphSDF(customNodes?: AppNode[], customEdges?: Edge[]): (p: THREE.Vector3) => SDFResult {
+  const nodes = customNodes || useStore.getState().nodes;
+  const edges = customEdges || useStore.getState().edges;
   
   // Find the output node
   const outputNode = nodes.find(n => n.type === 'outputNode' || n.data.type === 'output');
@@ -45,18 +46,21 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
       case 'mesh': {
         const nodeColor = new THREE.Color(data.color || '#f97316');
         return (p: THREE.Vector3) => {
-          if (!data.bvh || !data.geometry || !data.geometry.index) return { dist: 10000, color: nodeColor };
+          if (!data.bvh || !data.geometry) return { dist: 10000, color: nodeColor };
           
           const transformedP = sdf.opTransform(p, new THREE.Vector3(...data.position));
-          const targetInfo: any = {};
-          data.bvh.closestPointToPoint(transformedP, targetInfo);
+          const scale = data.scale || 1.0;
+          const scaledP = transformedP.clone().divideScalar(scale);
           
-          let signedDist = targetInfo.distance;
+          const targetInfo: any = {};
+          data.bvh.closestPointToPoint(scaledP, targetInfo);
+          
+          let signedDist = targetInfo.distance * scale;
           
           // Use robust raycasting to determine inside/outside (parity check)
           // Use an irrational direction to avoid perfectly hitting edges/vertices
           const dir = new THREE.Vector3(Math.PI, Math.E, Math.SQRT2).normalize();
-          const ray = new THREE.Ray(transformedP, dir);
+          const ray = new THREE.Ray(scaledP, dir);
           
           // raycast returns an array of intersections
           const hits = data.bvh.raycast(ray, THREE.DoubleSide);
@@ -147,12 +151,28 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
             case 'fractalNoise': latticeDist = (sdf.sdFractalNoise(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
             case 'cylindricalGrid': latticeDist = (sdf.sdCylindricalGrid(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
             case 'tubularGyroid': latticeDist = (sdf.sdTubularGyroid(p.clone().multiplyScalar(scale)) - data.thickness) / scale; break;
+            case 'fischerKochS': latticeDist = sdf.sdFischerKochS(p, scale, data.thickness); break;
+            case 'fischerKochD': latticeDist = sdf.sdFischerKochD(p, scale, data.thickness); break;
+            case 'splitP': latticeDist = sdf.sdSplitP(p, scale, data.thickness); break;
+            case 'gPrime': latticeDist = sdf.sdGPrime(p, scale, data.thickness); break;
+            case 'iwp2': latticeDist = sdf.sdIWP2(p, scale, data.thickness); break;
+            case 'carlyle': latticeDist = sdf.sdCarlyle(p, scale, data.thickness); break;
+            case 'crossedDecagons': latticeDist = sdf.sdCrossedDecagons(p, scale, data.thickness); break;
+            case 'kelvin': latticeDist = sdf.sdKelvin(p, scale, data.thickness); break;
+            case 'kagome': latticeDist = sdf.sdKagome(p, scale, data.thickness); break;
+            case 'waffle': latticeDist = sdf.sdWaffle(p, scale, data.thickness); break;
+            case 'chiral': latticeDist = sdf.sdChiral(p, scale, data.thickness); break;
+            case 'radialGrid': latticeDist = sdf.sdRadialGrid(p, scale, data.thickness); break;
+            case 'herringbone': latticeDist = sdf.sdHerringbone(p, scale, data.thickness); break;
+            case 'weairePhelan': latticeDist = sdf.sdWeairePhelan(p, scale, data.thickness); break;
+            case 'boxFrame': latticeDist = sdf.sdBoxFrame(p, scale, data.thickness); break;
+            case 'octahedral': latticeDist = sdf.sdOctahedral(p, scale, data.thickness); break;
             case 'gyroid':
             default: latticeDist = sdf.sdGyroid(p, scale, data.thickness); break;
           }
           // Infill the base with lattice
           const finalDist = sdf.opIntersect(rBase.dist, latticeDist);
-          const finalColor = rBase.dist > latticeDist ? rBase.color.clone() : latticeColor;
+          const finalColor = rBase.color.clone();
           return { dist: finalDist, color: finalColor };
         };
       }
@@ -222,6 +242,8 @@ export function buildGraphSDF(): (p: THREE.Vector3) => SDFResult {
             case 'ripple': deformedP = sdf.opRipple(deformedP, (data.strength || 0) * 2, Math.abs(data.strength || 0) * 0.5); break;
             case 'elongateX': deformedP = sdf.opElongateX(deformedP, Math.abs(data.strength || 0)); break;
             case 'elongateY': deformedP = sdf.opElongateY(deformedP, Math.abs(data.strength || 0)); break;
+            case 'bulge': deformedP = sdf.opBulge(deformedP, data.strength || 0); break;
+            case 'pinch': deformedP = sdf.opPinch(deformedP, data.strength || 0); break;
           }
           return baseFunc(deformedP);
         };

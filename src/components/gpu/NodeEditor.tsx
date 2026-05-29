@@ -1,10 +1,10 @@
 "use client";
 
-import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react';
+import { ReactFlow, Background, Controls } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useGpuStore, AppNode } from '@/store/useGpuStore';
 import { OutputNode, PrimitiveNode, BooleanNode, LatticeNode, MeshNode, ModifierNode, TransformNode, DeformNode, RepeatNode, MorphNode, SymmetryNode } from './EditorNodes';
-import { useMemo, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 // @ts-ignore
 const nodeTypes = {
@@ -43,7 +43,6 @@ export function NodeEditor() {
 
   const onPaneClick = useCallback(() => setMenu(null), []);
 
-
   const handleAddNode = (type: string) => {
     let newNode: AppNode;
     const id = type + '_' + Date.now();
@@ -51,13 +50,13 @@ export function NodeEditor() {
 
     switch (type) {
       case 'primitive':
-        newNode = { id, type: 'primitiveNode', position, data: { type: 'primitive', name: 'Primitive', shape: 'box', position: [0, 0, 0], scale: 2 } };
+        newNode = { id, type: 'primitiveNode', position, data: { type: 'primitive', name: 'Primitive', shape: 'box', position: [0, 0, 0], scale: 2, color: '#6366f1' } };
         break;
       case 'boolean':
         newNode = { id, type: 'booleanNode', position, data: { type: 'boolean', name: 'Boolean', operation: 'union', smoothness: 1.0 } };
         break;
       case 'lattice':
-        newNode = { id, type: 'latticeNode', position, data: { type: 'lattice', name: 'Lattice', pattern: 'gyroid', scale: 500, thickness: 0.1 } };
+        newNode = { id, type: 'latticeNode', position, data: { type: 'lattice', name: 'Lattice', pattern: 'gyroid', scale: 500, thickness: 0.1, color: '#06b6d4' } };
         break;
       default: return;
     }
@@ -65,55 +64,56 @@ export function NodeEditor() {
     addNode(newNode);
   };
 
+  const btnStyle = "bg-zinc-900/90 border border-zinc-800/80 text-zinc-300 hover:text-amber-500 hover:border-amber-500/50 hover:bg-zinc-850/90 py-1.5 px-3.5 rounded-xl text-xs font-semibold shadow-md transition-all duration-200 cursor-pointer nodrag";
+
   return (
     <div className="w-full h-full relative bg-zinc-950">
-      <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2 max-w-[80%]">
-        <button onClick={() => handleAddNode('primitive')} className="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded text-xs font-bold hover:bg-zinc-700">
+      <div className="absolute top-4 left-4 z-10 flex flex-wrap gap-2 max-w-[85%]">
+        <button onClick={() => handleAddNode('primitive')} className={btnStyle}>
           + Primitive
         </button>
-        <button onClick={() => handleAddNode('boolean')} className="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded text-xs font-bold hover:bg-zinc-700">
+        <button onClick={() => handleAddNode('boolean')} className={btnStyle}>
           + Boolean
         </button>
-        <button onClick={() => handleAddNode('lattice')} className="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded text-xs font-bold hover:bg-zinc-700">
+        <button onClick={() => handleAddNode('lattice')} className={btnStyle}>
           + Lattice
         </button>
         <button 
           onClick={() => addNode({ id: 'mod_' + Date.now(), type: 'modifierNode', position: { x: 200, y: 200 }, data: { type: 'modifier', name: 'Modifier', modifierType: 'shell', amount: 0.1 } })}
-          className="bg-yellow-900/50 hover:bg-yellow-800/50 border border-yellow-700 text-yellow-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Modifier
         </button>
 
-        {/* New Parametric Nodes */}
-        <div className="w-px h-6 bg-zinc-700 mx-1 self-center" />
+        <div className="w-px h-6 bg-zinc-850 mx-1 self-center" />
 
         <button 
           onClick={() => addNode({ id: 'tfm_' + Date.now(), type: 'transformNode', position: { x: 200, y: 250 }, data: { type: 'transform', name: 'Transform', translate: [0,0,0], rotate: [0,0,0], scale: [1,1,1] } })}
-          className="bg-purple-900/50 hover:bg-purple-800/50 border border-purple-700 text-purple-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Transform
         </button>
         <button 
           onClick={() => addNode({ id: 'def_' + Date.now(), type: 'deformNode', position: { x: 200, y: 300 }, data: { type: 'deform', name: 'Deform', deformType: 'twist', strength: 0.5 } })}
-          className="bg-pink-900/50 hover:bg-pink-800/50 border border-pink-700 text-pink-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Deform
         </button>
         <button 
           onClick={() => addNode({ id: 'sym_' + Date.now(), type: 'symmetryNode', position: { x: 200, y: 350 }, data: { type: 'symmetry', name: 'Symmetry', symType: 'symX', slices: 6 } })}
-          className="bg-emerald-900/50 hover:bg-emerald-800/50 border border-emerald-700 text-emerald-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Symmetry
         </button>
         <button 
           onClick={() => addNode({ id: 'rep_' + Date.now(), type: 'repeatNode', position: { x: 200, y: 350 }, data: { type: 'repeat', name: 'Repeat', spacing: [5,0,0] } })}
-          className="bg-blue-900/50 hover:bg-blue-800/50 border border-blue-700 text-blue-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Array
         </button>
         <button 
           onClick={() => addNode({ id: 'mph_' + Date.now(), type: 'morphNode', position: { x: 200, y: 400 }, data: { type: 'morph', name: 'Morph', amount: 0.5 } })}
-          className="bg-violet-900/50 hover:bg-violet-800/50 border border-violet-700 text-violet-300 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors"
+          className={btnStyle}
         >
           + Morph
         </button>
@@ -131,18 +131,18 @@ export function NodeEditor() {
         nodeTypes={nodeTypes as any}
         fitView
       >
-        <Background color="#333" gap={16} />
-        <Controls className="!bg-zinc-800 !border-zinc-700 !fill-zinc-300" />
+        <Background color="#1f1f23" gap={16} />
+        <Controls className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 !text-zinc-400" />
       </ReactFlow>
 
       {menu && (
         <div 
-          className="fixed z-[9999] bg-zinc-900 border border-zinc-700 shadow-xl rounded-lg p-1 min-w-[120px]"
+          className="fixed z-[9999] bg-zinc-950 border border-zinc-800 shadow-2xl rounded-xl p-1.5 min-w-[140px]"
           style={{ top: menu.top, left: menu.left }}
         >
           {menu.type === 'node' && (
             <button 
-              className="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-zinc-800 rounded font-medium transition-colors"
+              className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:text-amber-500 hover:bg-zinc-900 rounded-lg font-medium transition-colors"
               onClick={() => {
                 const nodeToCopy = useGpuStore.getState().nodes.find(n => n.id === menu.id);
                 if (nodeToCopy && nodeToCopy.type !== 'outputNode') {
@@ -153,7 +153,6 @@ export function NodeEditor() {
                     data: { ...nodeToCopy.data }
                   } as any;
                   
-                  // Clone arrays like translate/rotate/scale if they exist so they don't share reference
                   if (newNode.data.translate) newNode.data.translate = [...newNode.data.translate];
                   if (newNode.data.rotate) newNode.data.rotate = [...newNode.data.rotate];
                   if (newNode.data.scale && Array.isArray(newNode.data.scale)) newNode.data.scale = [...newNode.data.scale];
@@ -168,7 +167,7 @@ export function NodeEditor() {
             </button>
           )}
           <button 
-            className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 rounded font-medium transition-colors"
+            className="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-zinc-900 rounded-lg font-medium transition-colors"
             onClick={() => {
               if (menu.type === 'node') removeNode(menu.id);
               if (menu.type === 'edge') removeEdge(menu.id);

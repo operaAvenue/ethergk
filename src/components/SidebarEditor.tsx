@@ -1,24 +1,24 @@
 "use client";
 
 import { useStore, AppNode } from '@/store/useStore';
-import { Box, Plus, Waves, LayoutTemplate, Rotate3D, Grid, SlidersHorizontal, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Box, Plus, Waves, Rotate3D, Grid, SlidersHorizontal, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const num = (v: any) => (typeof v === 'number' && Number.isNaN(v)) ? '' : v;
 
-function NodePanel({ node, children, icon, title, color }: any) {
+function NodePanel({ node, children, icon, title }: any) {
   const [expanded, setExpanded] = useState(true);
   const removeNode = useStore(state => state.removeNode);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl mb-3 overflow-hidden shadow-lg">
+    <div className="bg-zinc-950/80 border border-zinc-850 rounded-xl mb-3 overflow-hidden shadow-md">
       <div 
-        className="px-3 py-2 bg-zinc-800/50 flex items-center justify-between cursor-pointer hover:bg-zinc-800 transition-colors"
+        className="px-3 py-2.5 bg-zinc-900/60 flex items-center justify-between cursor-pointer hover:bg-zinc-900 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
-          <div className={`text-${color}-400`}>{icon}</div>
-          <span className="font-bold text-xs text-zinc-200">{title}</span>
+          <div className="text-amber-500">{icon}</div>
+          <span className="font-bold text-xs text-zinc-200 tracking-wide uppercase text-[10px]">{title}</span>
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -31,7 +31,7 @@ function NodePanel({ node, children, icon, title, color }: any) {
         </div>
       </div>
       {expanded && (
-        <div className="p-3 flex flex-col gap-3 text-xs">
+        <div className="p-3 flex flex-col gap-3 text-xs text-zinc-350">
           {children}
         </div>
       )}
@@ -42,7 +42,6 @@ function NodePanel({ node, children, icon, title, color }: any) {
 export function SidebarEditor() {
   const { nodes, updateNodeData } = useStore();
 
-  // Filter out the output node, show others
   const modifiers = nodes.filter(n => n.type !== 'outputNode' && n.data?.type !== 'output');
 
   const renderNodeControls = (node: AppNode) => {
@@ -50,28 +49,35 @@ export function SidebarEditor() {
     
     if (d.type === 'primitive') {
       return (
-        <NodePanel node={node} title="Primitive" icon={<Box className="w-4 h-4" />} color="emerald">
+        <NodePanel node={node} title="Primitive" icon={<Box className="w-4 h-4" />}>
           <select 
             value={d.shape} 
             onChange={(e) => updateNodeData(node.id, { shape: e.target.value })}
-            className="w-full bg-zinc-950 text-zinc-300 p-1.5 rounded border border-zinc-800 outline-none"
+            className="w-full bg-zinc-900 text-zinc-300 p-1.5 rounded-lg border border-zinc-800 outline-none text-xs focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
           >
             <option value="box">Box</option>
             <option value="sphere">Sphere</option>
             <option value="cylinder">Cylinder</option>
           </select>
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 flex justify-between">Scale <span>{d.scale?.toFixed(2)}</span></label>
-            <input type="range" min="0.1" max="10.0" step="0.1" value={num(d.scale || 1.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-emerald-500" />
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-zinc-500 flex justify-between font-medium">Scale <span>{d.scale?.toFixed(2)}</span></label>
+            <input type="range" min="0.1" max="10.0" step="0.1" value={num(d.scale || 1.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-amber-500 cursor-pointer" />
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500">Position (X, Y, Z)</label>
-            <div className="flex gap-1">
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-zinc-500 font-medium">Position (X, Y, Z)</label>
+            <div className="flex gap-1.5">
               {['x', 'y', 'z'].map((axis, i) => (
-                 <input key={axis} type="number" step="0.5" value={num(d.position ? d.position[i] : 0)} onChange={(e) => {
-                   const pos = d.position ? [...d.position] : [0,0,0]; pos[i] = parseFloat(e.target.value);
-                   updateNodeData(node.id, { position: pos as any });
-                 }} className="w-full bg-zinc-950 border border-zinc-800 rounded p-1 text-center" />
+                 <input 
+                   key={axis} 
+                   type="number" 
+                   step="0.5" 
+                   value={num(d.position ? d.position[i] : 0)} 
+                   onChange={(e) => {
+                     const pos = d.position ? [...d.position] : [0,0,0]; pos[i] = parseFloat(e.target.value);
+                     updateNodeData(node.id, { position: pos as any });
+                   }} 
+                   className="w-full bg-zinc-900 border border-zinc-800 rounded p-1 text-center text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 text-[11px]" 
+                 />
               ))}
             </div>
           </div>
@@ -81,14 +87,21 @@ export function SidebarEditor() {
     
     if (d.type === 'mesh') {
       return (
-        <NodePanel node={node} title={`Mesh: ${d.name || 'Imported'}`} icon={<Rotate3D className="w-4 h-4" />} color="orange">
-          <div className="text-[10px] text-zinc-400">Position (X, Y, Z)</div>
-          <div className="flex gap-1">
+        <NodePanel node={node} title={`Mesh: ${d.name || 'Imported'}`} icon={<Rotate3D className="w-4 h-4" />}>
+          <div className="text-[10px] text-zinc-500 font-medium">Position (X, Y, Z)</div>
+          <div className="flex gap-1.5">
             {['x', 'y', 'z'].map((axis, i) => (
-               <input key={axis} type="number" step="0.5" value={num(d.position ? d.position[i] : 0)} onChange={(e) => {
-                 const pos = d.position ? [...d.position] : [0,0,0]; pos[i] = parseFloat(e.target.value);
-                 updateNodeData(node.id, { position: pos as any });
-               }} className="w-full bg-zinc-950 border border-zinc-800 rounded p-1 text-center" />
+               <input 
+                 key={axis} 
+                 type="number" 
+                 step="0.5" 
+                 value={num(d.position ? d.position[i] : 0)} 
+                 onChange={(e) => {
+                   const pos = d.position ? [...d.position] : [0,0,0]; pos[i] = parseFloat(e.target.value);
+                   updateNodeData(node.id, { position: pos as any });
+                 }} 
+                 className="w-full bg-zinc-900 border border-zinc-800 rounded p-1 text-center text-zinc-300 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 text-[11px]" 
+               />
             ))}
           </div>
         </NodePanel>
@@ -97,11 +110,11 @@ export function SidebarEditor() {
 
     if (d.type === 'boolean') {
       return (
-        <NodePanel node={node} title="Boolean" icon={<Plus className="w-4 h-4" />} color="fuchsia">
+        <NodePanel node={node} title="Boolean" icon={<Plus className="w-4 h-4" />}>
           <select 
             value={d.operation}
             onChange={(e) => updateNodeData(node.id, { operation: e.target.value as any })}
-            className="w-full bg-zinc-950 text-zinc-300 p-1.5 rounded border border-zinc-800 outline-none"
+            className="w-full bg-zinc-900 text-zinc-300 p-1.5 rounded-lg border border-zinc-800 outline-none text-xs focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
           >
             <option value="union">Union</option>
             <option value="subtract">Subtract</option>
@@ -111,9 +124,9 @@ export function SidebarEditor() {
             <option value="smoothIntersect">Smooth Intersect</option>
           </select>
           {d.operation.includes('smooth') && (
-            <div className="space-y-1">
-              <label className="text-[10px] text-zinc-500 flex justify-between">Smoothness <span>{d.smoothness?.toFixed(2)}</span></label>
-              <input type="range" min="0.1" max="5.0" step="0.1" value={num(d.smoothness || 0.1)} onChange={(e) => updateNodeData(node.id, { smoothness: parseFloat(e.target.value) })} className="w-full accent-fuchsia-500" />
+            <div className="space-y-1.5">
+              <label className="text-[10px] text-zinc-500 flex justify-between font-medium">Smoothness <span>{d.smoothness?.toFixed(2)}</span></label>
+              <input type="range" min="0.1" max="5.0" step="0.1" value={num(d.smoothness || 0.1)} onChange={(e) => updateNodeData(node.id, { smoothness: parseFloat(e.target.value) })} className="w-full accent-amber-500 cursor-pointer" />
             </div>
           )}
         </NodePanel>
@@ -122,24 +135,58 @@ export function SidebarEditor() {
 
     if (d.type === 'lattice') {
       return (
-        <NodePanel node={node} title="Lattice" icon={<Grid className="w-4 h-4" />} color="cyan">
+        <NodePanel node={node} title="Lattice" icon={<Grid className="w-4 h-4" />}>
           <select 
             value={d.pattern}
             onChange={(e) => updateNodeData(node.id, { pattern: e.target.value as any })}
-            className="w-full bg-zinc-950 text-zinc-300 p-1.5 rounded border border-zinc-800 outline-none"
+            className="w-full bg-zinc-900 text-zinc-300 p-1.5 rounded-lg border border-zinc-800 outline-none text-xs focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
           >
-            <option value="gyroid">Gyroid</option>
-            <option value="schwarzP">Schwarz P</option>
-            <option value="diamond">Diamond</option>
-            <option value="grid">Grid</option>
+            <optgroup label="TPMS Structures">
+              <option value="gyroid">Gyroid</option>
+              <option value="schwarzP">Schwarz P</option>
+              <option value="diamond">Diamond</option>
+              <option value="neovius">Neovius</option>
+              <option value="iwp">Schoen I-WP</option>
+              <option value="frd">Schoen F-RD</option>
+              <option value="lidinoid">Lidinoid</option>
+              <option value="schwarzH">Schwarz H (Hex)</option>
+              <option value="tubularGyroid">Tubular Gyroid</option>
+              <option value="fischerKochS">Fischer-Koch S</option>
+              <option value="fischerKochD">Fischer-Koch D</option>
+              <option value="splitP">Split P</option>
+              <option value="gPrime">Schoen G-Prime</option>
+              <option value="iwp2">I-WP Variant</option>
+              <option value="carlyle">Carlyle</option>
+              <option value="crossedDecagons">Crossed Decagons</option>
+            </optgroup>
+            <optgroup label="Lattices & Infill">
+              <option value="grid">3D Grid</option>
+              <option value="honeycomb">Honeycomb</option>
+              <option value="octet">Octet Truss</option>
+              <option value="cylindricalGrid">Cylindrical Grid</option>
+              <option value="kelvin">Kelvin Cell</option>
+              <option value="kagome">Kagome Lattice</option>
+              <option value="waffle">Waffle Lattice</option>
+              <option value="chiral">Chiral Gyroid</option>
+              <option value="radialGrid">Radial Grid</option>
+              <option value="herringbone">Herringbone</option>
+              <option value="weairePhelan">Weaire-Phelan</option>
+              <option value="boxFrame">Box Frame</option>
+              <option value="octahedral">Octahedral Frame</option>
+            </optgroup>
+            <optgroup label="Textures & Pores">
+              <option value="foam">Spherical Foam</option>
+              <option value="fractalNoise">Fractal Noise</option>
+              <option value="sineWave">Sine Ripple</option>
+            </optgroup>
           </select>
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 flex justify-between">Scale <span>{d.scale?.toFixed(0)}</span></label>
-            <input type="range" min="10" max="2000" step="1" value={num(d.scale || 10.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-cyan-500" />
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-zinc-500 flex justify-between font-medium">Scale <span>{d.scale?.toFixed(0)}</span></label>
+            <input type="range" min="10" max="2000" step="1" value={num(d.scale || 10.0)} onChange={(e) => updateNodeData(node.id, { scale: parseFloat(e.target.value) })} className="w-full accent-amber-500 cursor-pointer" />
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 flex justify-between">Thickness <span>{d.thickness?.toFixed(2)}</span></label>
-            <input type="range" min="0.01" max="1.0" step="0.01" value={num(d.thickness || 0.1)} onChange={(e) => updateNodeData(node.id, { thickness: parseFloat(e.target.value) })} className="w-full accent-cyan-500" />
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-zinc-500 flex justify-between font-medium">Thickness <span>{d.thickness?.toFixed(2)}</span></label>
+            <input type="range" min="0.01" max="1.0" step="0.01" value={num(d.thickness || 0.1)} onChange={(e) => updateNodeData(node.id, { thickness: parseFloat(e.target.value) })} className="w-full accent-amber-500 cursor-pointer" />
           </div>
         </NodePanel>
       );
@@ -147,39 +194,39 @@ export function SidebarEditor() {
 
     if (d.type === 'modifier') {
       return (
-        <NodePanel node={node} title="Modifier" icon={<Waves className="w-4 h-4" />} color="yellow">
+        <NodePanel node={node} title="Modifier" icon={<Waves className="w-4 h-4" />}>
           <select 
             value={d.modifierType}
             onChange={(e) => updateNodeData(node.id, { modifierType: e.target.value as any })}
-            className="w-full bg-zinc-950 text-zinc-300 p-1.5 rounded border border-zinc-800 outline-none"
+            className="w-full bg-zinc-900 text-zinc-300 p-1.5 rounded-lg border border-zinc-800 outline-none text-xs focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30"
           >
             <option value="shell">Shell</option>
             <option value="offset">Offset</option>
           </select>
-          <div className="space-y-1">
-            <label className="text-[10px] text-zinc-500 flex justify-between">Amount <span>{d.amount?.toFixed(2)}</span></label>
-            <input type="range" min="-2.0" max="2.0" step="0.05" value={num(d.amount || 0)} onChange={(e) => updateNodeData(node.id, { amount: parseFloat(e.target.value) })} className="w-full accent-yellow-500" />
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-zinc-500 flex justify-between font-medium">Amount <span>{d.amount?.toFixed(2)}</span></label>
+            <input type="range" min="-2.0" max="2.0" step="0.05" value={num(d.amount || 0)} onChange={(e) => updateNodeData(node.id, { amount: parseFloat(e.target.value) })} className="w-full accent-amber-500 cursor-pointer" />
           </div>
         </NodePanel>
       );
     }
 
     return (
-      <NodePanel node={node} title={d.name || d.type} icon={<SlidersHorizontal className="w-4 h-4" />} color="zinc">
+      <NodePanel node={node} title={d.name || d.type} icon={<SlidersHorizontal className="w-4 h-4" />}>
         <div className="text-[10px] text-zinc-500 italic">Settings not available in Sidebar yet. Switch to Node Editor.</div>
       </NodePanel>
     );
   };
 
   return (
-    <div className="w-full h-full bg-zinc-950 border border-zinc-800 overflow-y-auto p-4 custom-scrollbar">
-      <div className="mb-4 pb-2 border-b border-zinc-800 flex items-center gap-2 text-zinc-300">
-        <SlidersHorizontal className="w-5 h-5" />
-        <h3 className="font-bold">Stack Editor</h3>
+    <div className="w-full h-full bg-zinc-950 border border-zinc-850 overflow-y-auto p-4 custom-scrollbar text-zinc-350">
+      <div className="mb-4 pb-2 border-b border-zinc-850 flex items-center gap-2 text-zinc-300">
+        <SlidersHorizontal className="w-5 h-5 text-amber-500" />
+        <h3 className="font-bold uppercase tracking-wider text-[11px]">Stack Editor</h3>
       </div>
       
       {modifiers.length === 0 ? (
-        <div className="text-center text-zinc-500 mt-10 text-sm">
+        <div className="text-center text-zinc-500 mt-10 text-xs">
           No items in the stack.<br/> Switch to Node Editor to add items.
         </div>
       ) : (

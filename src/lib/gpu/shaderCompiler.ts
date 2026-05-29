@@ -4,7 +4,7 @@ import { useGpuStore, AppNode, LogicNodeData } from '@/store/useGpuStore';
 const SDF_LIBRARY = `
 #define MAX_STEPS 150
 #define MAX_DIST 100.0
-#define SURF_DIST 0.001
+#define SURF_DIST 0.0005
 
 mat2 rot(float a) {
     float s = sin(a), c = cos(a);
@@ -25,23 +25,42 @@ float sdCylinder(vec3 p, vec3 c) {
   return length(p.xz-c.xy)-c.z;
 }
 
-// Booleans
-float opUnion(float d1, float d2) { return min(d1,d2); }
-float opSubtract(float d1, float d2) { return max(-d1,d2); }
-float opIntersect(float d1, float d2) { return max(d1,d2); }
+// Booleans (vec4 layout: xyz = color, w = distance)
+vec4 opUnion(vec4 d1, vec4 d2) {
+    return d1.w < d2.w ? d1 : d2;
+}
+vec4 opSubtract(vec4 d1, vec4 d2) {
+    float d = max(d1.w, -d2.w);
+    vec3 col = d1.w > -d2.w ? d1.xyz : d2.xyz;
+    return vec4(col, d);
+}
+vec4 opIntersect(vec4 d1, vec4 d2) {
+    float d = max(d1.w, d2.w);
+    vec3 col = d1.w > d2.w ? d1.xyz : d2.xyz;
+    return vec4(col, d);
+}
+vec4 opSmoothUnion(vec4 d1, vec4 d2, float k) {
+    float h = clamp( 0.5 + 0.5*(d2.w-d1.w)/k, 0.0, 1.0 );
+    float d = mix( d2.w, d1.w, h ) - k*h*(1.0-h);
+    vec3 col = mix( d2.xyz, d1.xyz, h );
+    return vec4(col, d);
+}
+vec4 opSmoothSubtract(vec4 d1, vec4 d2, float k) {
+    float h = clamp( 0.5 - 0.5*(d1.w+d2.w)/k, 0.0, 1.0 );
+    float d = mix( d1.w, -d2.w, h ) + k*h*(1.0-h);
+    vec3 col = mix( d1.xyz, d2.xyz, h );
+    return vec4(col, d);
+}
+vec4 opSmoothIntersect(vec4 d1, vec4 d2, float k) {
+    float h = clamp( 0.5 - 0.5*(d2.w-d1.w)/k, 0.0, 1.0 );
+    float d = mix( d2.w, d1.w, h ) + k*h*(1.0-h);
+    vec3 col = mix( d2.xyz, d1.xyz, h );
+    return vec4(col, d);
+}
 
-float opSmoothUnion(float d1, float d2, float k) {
-    float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
-    return mix( d2, d1, h ) - k*h*(1.0-h);
-}
-float opSmoothSubtract(float d1, float d2, float k) {
-    float h = clamp( 0.5 - 0.5*(d2+d1)/k, 0.0, 1.0 );
-    return mix( d2, -d1, h ) + k*h*(1.0-h);
-}
-float opSmoothIntersect(float d1, float d2, float k) {
-    float h = clamp( 0.5 - 0.5*(d2-d1)/k, 0.0, 1.0 );
-    return mix( d2, d1, h ) + k*h*(1.0-h);
-}
+// Modifiers
+float opOffset(float d, float offset) { return d - offset; }
+float opShell(float d, float thickness) { return abs(d) - thickness; }
 
 // Lattices
 float sdGyroid(vec3 p, float scale, float thickness) {
@@ -59,15 +78,172 @@ float sdDiamond(vec3 p, float scale, float thickness) {
     float val = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
     return (abs(val) - thickness) / scale;
 }
+float sdNeovius(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 3.0 * (cos(p.x) + cos(p.y) + cos(p.z)) + 4.0 * cos(p.x) * cos(p.y) * cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdIWP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 2.0 * (cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x)) - (cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdFRD(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 4.0 * cos(p.x)*cos(p.y)*cos(p.z) - (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdLidinoid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 0.5 * (sin(2.0*p.x)*cos(p.y)*sin(p.z) + sin(2.0*p.y)*cos(p.z)*sin(p.x) + sin(2.0*p.z)*cos(p.x)*sin(p.y)) - 0.5 * (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x)) + 0.15;
+    return (abs(val) - thickness) / scale;
+}
+float sdSchwarzH(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - sin(p.x)*sin(p.y)*sin(p.z);
+    return (abs(val) - thickness) / scale;
+}
 float sdGrid(vec3 p, float scale, float thickness) {
     p *= scale;
-    vec3 q = abs(fract(p) - 0.5);
-    float dX = max(q.y, q.z);
-    float dY = max(q.x, q.z);
-    float dZ = max(q.x, q.y);
-    float val = min(dX, min(dY, dZ)) - 0.2;
+    float val = cos(p.x) + cos(p.y) + cos(p.z);
     return (val - thickness) / scale;
 }
+float sdHoneycomb(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.x/2.0 + p.y*0.866) + cos(p.x/2.0 - p.y*0.866);
+    return (val - thickness) / scale;
+}
+float sdOctet(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = abs(cos(p.x)*cos(p.y)) + abs(cos(p.y)*cos(p.z)) + abs(cos(p.z)*cos(p.x)) - 1.0;
+    return (val - thickness) / scale;
+}
+float sdSineWave(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x) * sin(p.y) * sin(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdFoam(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) + 0.5;
+    return (val - thickness) / scale;
+}
+float sdFractalNoise(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float f = sin(p.x)*cos(p.y)*sin(p.z);
+    f += 0.5 * sin(2.0*p.x)*cos(2.0*p.y)*sin(2.0*p.z);
+    f += 0.25 * sin(4.0*p.x)*cos(4.0*p.y)*sin(4.0*p.z);
+    return (f - thickness) / scale;
+}
+float sdCylindricalGrid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = min(cos(p.x) + cos(p.y), min(cos(p.y) + cos(p.z), cos(p.z) + cos(p.x)));
+    return (val - thickness) / scale;
+}
+float sdTubularGyroid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float g = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x);
+    float val = abs(g) - 0.2;
+    return (val - thickness) / scale;
+}
+float sdFischerKochS(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(2.0*p.x)*sin(p.y)*cos(p.z) + cos(2.0*p.y)*sin(p.z)*cos(p.x) + cos(2.0*p.z)*sin(p.x)*cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdFischerKochD(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(2.0*p.x)*sin(p.y)*cos(p.z) + sin(2.0*p.y)*sin(p.z)*cos(p.x) + sin(2.0*p.z)*sin(p.x)*cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdSplitP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 1.5 * (sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x)) - 0.5 * (sin(2.0*p.x)*sin(2.0*p.y) + sin(2.0*p.y)*sin(2.0*p.z) + sin(2.0*p.z)*sin(2.0*p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdGPrime(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*sin(p.y) + cos(p.y)*sin(p.z) + cos(p.z)*sin(p.x);
+    return (abs(val) - thickness) / scale;
+}
+float sdIWP2(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - 0.5 * (cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z)) - 0.2;
+    return (abs(val) - thickness) / scale;
+}
+float sdCarlyle(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.y) + cos(p.z) - (cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdCrossedDecagons(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x) - 0.4;
+    return (abs(val) - thickness) / scale;
+}
+float sdKelvin(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - 0.3 * sin(p.x)*sin(p.y)*sin(p.z) - 0.35;
+    return (abs(val) - thickness) / scale;
+}
+float sdKagome(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) + 0.25;
+    return (abs(val) - thickness) / scale;
+}
+float sdWaffle(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) * cos(p.y) + sin(p.z) * 0.5 - 0.2;
+    return (abs(val) - thickness) / scale;
+}
+float sdChiral(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float angle = 0.2 * p.z;
+    float c = cos(angle);
+    float s = sin(angle);
+    float rx = p.x * c - p.y * s;
+    float ry = p.x * s + p.y * c;
+    float val = sin(rx) * cos(ry) + sin(ry) * cos(p.z) + sin(p.z) * cos(rx);
+    return (abs(val) - thickness) / scale;
+}
+float sdRadialGrid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float r = length(p.xz);
+    float val = cos(r) + cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdHerringbone(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x + sin(p.y)) * cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdWeairePhelan(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x) + 0.4 * (cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdBoxFrame(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float pi2 = 6.28318530718;
+    float qx = abs(p.x - round(p.x / pi2) * pi2) - 1.5;
+    float qy = abs(p.y - round(p.y / pi2) * pi2) - 1.5;
+    float qz = abs(p.z - round(p.z / pi2) * pi2) - 1.5;
+    float d1 = max(qx, qy);
+    float d2 = max(qy, qz);
+    float d3 = max(qz, qx);
+    float val = min(d1, min(d2, d3)) - thickness;
+    return val / scale;
+}
+float sdOctahedral(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float pi2 = 6.28318530718;
+    float qx = abs(p.x - round(p.x / pi2) * pi2);
+    float qy = abs(p.y - round(p.y / pi2) * pi2);
+    float qz = abs(p.z - round(p.z / pi2) * pi2);
+    float val = (qx + qy + qz) - 2.5;
+    return (abs(val) - thickness) / scale;
+}
+
 
 // Space Modifiers
 vec3 opTwist(vec3 p, float k) {
@@ -78,13 +254,42 @@ vec3 opTwist(vec3 p, float k) {
     return vec3(q.x, q.z, q.y);
 }
 vec3 opTaper(vec3 p, float k) {
-    float c = cos(k*p.y);
-    float s = sin(k*p.y);
-    mat2  m = mat2(c,-s,s,c);
-    vec3  q = vec3(m*p.xz,p.y);
-    // Simple scaling by height
     float scale = 1.0 + p.y * k;
     return vec3(p.x / scale, p.y, p.z / scale);
+}
+vec3 opBend(vec3 p, float strength) {
+    float c = cos(strength * p.y);
+    float s = sin(strength * p.y);
+    float x = p.x * c - p.y * s;
+    float y = p.x * s + p.y * c;
+    return vec3(x, y, p.z);
+}
+vec3 opQuantize(vec3 p, float stepVal) {
+    if (stepVal <= 0.0) return p;
+    return round(p / stepVal) * stepVal;
+}
+vec3 opRipple(vec3 p, float freq, float amp) {
+    return vec3(p.x, p.y + sin(p.x * freq) * amp + cos(p.z * freq) * amp, p.z);
+}
+vec3 opElongateX(vec3 p, float len) {
+    vec3 q = p;
+    q.x -= clamp(p.x, -len, len);
+    return q;
+}
+vec3 opElongateY(vec3 p, float len) {
+    vec3 q = p;
+    q.y -= clamp(p.y, -len, len);
+    return q;
+}
+vec3 opBulge(vec3 p, float strength) {
+    float r2 = dot(p, p);
+    float f = 1.0 / (1.0 + strength * exp(-r2 * 0.05));
+    return p * f;
+}
+vec3 opPinch(vec3 p, float strength) {
+    float r2 = dot(p, p);
+    float f = 1.0 + strength * exp(-r2 * 0.05);
+    return p * f;
 }
 
 vec3 opRepeat(vec3 p, vec3 c) {
@@ -92,6 +297,23 @@ vec3 opRepeat(vec3 p, vec3 c) {
     if(c.x > 0.0) q.x = mod(q.x+0.5*c.x,c.x)-0.5*c.x;
     if(c.y > 0.0) q.y = mod(q.y+0.5*c.y,c.y)-0.5*c.y;
     if(c.z > 0.0) q.z = mod(q.z+0.5*c.z,c.z)-0.5*c.z;
+    return q;
+}
+
+vec3 opRotateEuler(vec3 p, vec3 rad) {
+    vec3 q = p;
+    // Rotate X
+    float cX = cos(-rad.x), sX = sin(-rad.x);
+    q.yz = mat2(cX, -sX, sX, cX) * q.yz;
+    
+    // Rotate Y
+    float cY = cos(-rad.y), sY = sin(-rad.y);
+    q.xz = mat2(cY, -sY, sY, cY) * q.xz;
+    
+    // Rotate Z
+    float cZ = cos(-rad.z), sZ = sin(-rad.z);
+    q.xy = mat2(cZ, -sZ, sZ, cZ) * q.xy;
+    
     return q;
 }
 
@@ -122,12 +344,44 @@ float sdMeshTexture(vec3 p, sampler3D tex, vec3 bboxMin, vec3 bboxMax) {
         return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0)) + 0.1; // +0.1 padding to prevent artifacts
     }
     
-    // Sample texture
-    return texture(tex, uvw).r;
+    // Sample texture with manual trilinear filtering for compatibility with NearestFilter
+    vec3 texSize = vec3(64.0);
+    vec3 texel = uvw * (texSize - 1.0);
+    vec3 texelMin = clamp(floor(texel), vec3(0.0), vec3(62.0));
+    vec3 f = fract(texel);
+    
+    // Sample the 8 corners of the voxel cell
+    float v000 = texture(tex, (texelMin + vec3(0.0, 0.0, 0.0)) / (texSize - 1.0)).r;
+    float v100 = texture(tex, (texelMin + vec3(1.0, 0.0, 0.0)) / (texSize - 1.0)).r;
+    float v010 = texture(tex, (texelMin + vec3(0.0, 1.0, 0.0)) / (texSize - 1.0)).r;
+    float v110 = texture(tex, (texelMin + vec3(1.0, 1.0, 0.0)) / (texSize - 1.0)).r;
+    float v001 = texture(tex, (texelMin + vec3(0.0, 0.0, 1.0)) / (texSize - 1.0)).r;
+    float v101 = texture(tex, (texelMin + vec3(1.0, 0.0, 1.0)) / (texSize - 1.0)).r;
+    float v011 = texture(tex, (texelMin + vec3(0.0, 1.0, 1.0)) / (texSize - 1.0)).r;
+    float v111 = texture(tex, (texelMin + vec3(1.0, 1.0, 1.0)) / (texSize - 1.0)).r;
+    
+    // Linearly interpolate along each axis
+    float v00 = mix(v000, v100, f.x);
+    float v10 = mix(v010, v110, f.x);
+    float v01 = mix(v001, v101, f.x);
+    float v11 = mix(v011, v111, f.x);
+    
+    float v0 = mix(v00, v10, f.y);
+    float v1 = mix(v01, v11, f.y);
+    
+    return mix(v0, v1, f.z);
 }
 `;
 
 // Build Map Function dynamically
+function hexToRgbFloat(hex: string): string {
+  const cleanHex = (hex || '#6366f1').replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+  return `vec3(${r.toFixed(5)}, ${g.toFixed(5)}, ${b.toFixed(5)})`;
+}
+
 export function compileGraphToGLSL(): string {
   const { nodes, edges } = useGpuStore.getState();
   
@@ -141,10 +395,6 @@ export function compileGraphToGLSL(): string {
 
   let mapBody = '';
   
-  // To avoid redundant calculations and infinite recursion, we use a Post-Order Traversal
-  // But for a DAG shader, we can just declare the node functions top down or resolve them recursively.
-  // Instead of full DAG deduplication (complex), we'll do an inline tree expansion for the MVP.
-  
   const generateNodeCode = (node: AppNode, pointVar: string): string => {
     const d = node.data as any;
     
@@ -152,18 +402,19 @@ export function compileGraphToGLSL(): string {
       case 'primitive': {
         const pStr = `${d.position[0].toFixed(5)}, ${d.position[1].toFixed(5)}, ${d.position[2].toFixed(5)}`;
         const sStr = (d.scale || 1.0).toFixed(5);
-        if (d.shape === 'box') return `sdBox(${pointVar} - vec3(${pStr}), vec3(${sStr}))`;
-        if (d.shape === 'sphere') return `sdSphere(${pointVar} - vec3(${pStr}), ${sStr})`;
-        if (d.shape === 'cylinder') return `sdCylinder(${pointVar} - vec3(${pStr}), vec3(${sStr}, ${sStr}, ${sStr}))`;
-        return '10000.0';
+        const colStr = hexToRgbFloat(d.color || '#6366f1');
+        if (d.shape === 'box') return `vec4(${colStr}, sdBox(${pointVar} - vec3(${pStr}), vec3(${sStr})))`;
+        if (d.shape === 'sphere') return `vec4(${colStr}, sdSphere(${pointVar} - vec3(${pStr}), ${sStr}))`;
+        if (d.shape === 'cylinder') return `vec4(${colStr}, sdCylinder(${pointVar} - vec3(${pStr}), vec3(${sStr}, ${sStr}, ${sStr})))`;
+        return `vec4(${colStr}, 10000.0)`;
       }
 
       case 'boolean': {
         const base = getConnectedNodes(node.id, 'base')[0];
-        const shapeB = getConnectedNodes(node.id, 'shapeB')[0];
-        if (!base) return '10000.0';
+        const tool = getConnectedNodes(node.id, 'tool')[0];
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
         const d1 = generateNodeCode(base, pointVar);
-        const d2 = shapeB ? generateNodeCode(shapeB, pointVar) : '10000.0';
+        const d2 = tool ? generateNodeCode(tool, pointVar) : 'vec4(vec3(0.0), 10000.0)';
         
         const sm = (d.smoothness || 0.1).toFixed(5);
         switch (d.operation) {
@@ -179,61 +430,127 @@ export function compileGraphToGLSL(): string {
 
       case 'lattice': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
-        const baseCode = base ? generateNodeCode(base, pointVar) : '10000.0';
+        const baseCode = base ? generateNodeCode(base, pointVar) : 'vec4(vec3(0.91, 0.47, 0.98), 10000.0)';
         let latCode = '10000.0';
-        // Invert scale so sliding right = visually larger
         const ls = (100.0 / (d.scale || 500.0)).toFixed(5);
         const lt = (d.thickness || 0.1).toFixed(5);
         switch (d.pattern) {
           case 'gyroid': latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;
           case 'schwarzP': latCode = `sdSchwarzP(${pointVar}, ${ls}, ${lt})`; break;
           case 'diamond': latCode = `sdDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'neovius': latCode = `sdNeovius(${pointVar}, ${ls}, ${lt})`; break;
+          case 'iwp': latCode = `sdIWP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'frd': latCode = `sdFRD(${pointVar}, ${ls}, ${lt})`; break;
+          case 'lidinoid': latCode = `sdLidinoid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzH': latCode = `sdSchwarzH(${pointVar}, ${ls}, ${lt})`; break;
           case 'grid': latCode = `sdGrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'honeycomb': latCode = `sdHoneycomb(${pointVar}, ${ls}, ${lt})`; break;
+          case 'octet': latCode = `sdOctet(${pointVar}, ${ls}, ${lt})`; break;
+          case 'sineWave': latCode = `sdSineWave(${pointVar}, ${ls}, ${lt})`; break;
+          case 'foam': latCode = `sdFoam(${pointVar}, ${ls}, ${lt})`; break;
+          case 'fractalNoise': latCode = `sdFractalNoise(${pointVar}, ${ls}, ${lt})`; break;
+          case 'cylindricalGrid': latCode = `sdCylindricalGrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'tubularGyroid': latCode = `sdTubularGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'fischerKochS': latCode = `sdFischerKochS(${pointVar}, ${ls}, ${lt})`; break;
+          case 'fischerKochD': latCode = `sdFischerKochD(${pointVar}, ${ls}, ${lt})`; break;
+          case 'splitP': latCode = `sdSplitP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'gPrime': latCode = `sdGPrime(${pointVar}, ${ls}, ${lt})`; break;
+          case 'iwp2': latCode = `sdIWP2(${pointVar}, ${ls}, ${lt})`; break;
+          case 'carlyle': latCode = `sdCarlyle(${pointVar}, ${ls}, ${lt})`; break;
+          case 'crossedDecagons': latCode = `sdCrossedDecagons(${pointVar}, ${ls}, ${lt})`; break;
+          case 'kelvin': latCode = `sdKelvin(${pointVar}, ${ls}, ${lt})`; break;
+          case 'kagome': latCode = `sdKagome(${pointVar}, ${ls}, ${lt})`; break;
+          case 'waffle': latCode = `sdWaffle(${pointVar}, ${ls}, ${lt})`; break;
+          case 'chiral': latCode = `sdChiral(${pointVar}, ${ls}, ${lt})`; break;
+          case 'radialGrid': latCode = `sdRadialGrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'herringbone': latCode = `sdHerringbone(${pointVar}, ${ls}, ${lt})`; break;
+          case 'weairePhelan': latCode = `sdWeairePhelan(${pointVar}, ${ls}, ${lt})`; break;
+          case 'boxFrame': latCode = `sdBoxFrame(${pointVar}, ${ls}, ${lt})`; break;
+          case 'octahedral': latCode = `sdOctahedral(${pointVar}, ${ls}, ${lt})`; break;
           default: latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;
         }
-        return `opIntersect(${baseCode}, ${latCode})`;
+        return `vec4(${baseCode}.xyz, opIntersect(${baseCode}, vec4(vec3(0.0), ${latCode})).w)`;
+      }
+
+      case 'modifier': {
+        const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
+        const d1 = generateNodeCode(base, pointVar);
+        const amt = (d.amount || 0).toFixed(5);
+        if (d.modifierType === 'shell') {
+          return `vec4(${d1}.xyz, opShell(${d1}.w, ${amt}))`;
+        } else {
+          return `vec4(${d1}.xyz, opOffset(${d1}.w, ${amt}))`;
+        }
+      }
+
+      case 'morph': {
+        const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
+        const shapeB = getConnectedNodes(node.id, 'shapeB')[0];
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
+        const d1 = generateNodeCode(base, pointVar);
+        const d2 = shapeB ? generateNodeCode(shapeB, pointVar) : 'vec4(vec3(0.0), 10000.0)';
+        const amt = (d.amount || 0).toFixed(5);
+        return `mix(${d1}, ${d2}, ${amt})`;
       }
 
       case 'transform': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
-        if (!base) return '10000.0';
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
         
-        // Inverse transform the point
-        // Rotate then translate
-        // In GLSL: pointVar is a string, so we need to create a temporary variable block, or use inline
-        // Inline is cleaner:
-        // p - translate, then rot()
+        const tx = (d.translate?.[0] || 0).toFixed(5);
+        const ty = (d.translate?.[1] || 0).toFixed(5);
+        const tz = (d.translate?.[2] || 0).toFixed(5);
         
-        const tx = d.translate[0].toFixed(3);
-        const ty = d.translate[1].toFixed(3);
-        const tz = d.translate[2].toFixed(3);
+        const rx = ((d.rotate?.[0] || 0) * Math.PI / 180.0).toFixed(5);
+        const ry = ((d.rotate?.[1] || 0) * Math.PI / 180.0).toFixed(5);
+        const rz = ((d.rotate?.[2] || 0) * Math.PI / 180.0).toFixed(5);
         
-        // Very basic inline transform (translate only for now to avoid huge inline strings)
-        // A better way is to declare variables, but let's do simple translate:
-        const tPoint = `(${pointVar} - vec3(${tx}, ${ty}, ${tz}))`;
+        const sx = (d.scale?.[0] || 1.0).toFixed(5);
+        const sy = (d.scale?.[1] || 1.0).toFixed(5);
+        const sz = (d.scale?.[2] || 1.0).toFixed(5);
         
-        return generateNodeCode(base, tPoint);
+        const minScale = Math.min(d.scale?.[0] || 1.0, d.scale?.[1] || 1.0, d.scale?.[2] || 1.0).toFixed(5);
+        
+        const localPoint = `(opRotateEuler(${pointVar} - vec3(${tx}, ${ty}, ${tz}), vec3(${rx}, ${ry}, ${rz})) / vec3(${sx}, ${sy}, ${sz}))`;
+        const baseExpr = generateNodeCode(base, localPoint);
+        
+        return `vec4(${baseExpr}.xyz, ${baseExpr}.w * ${minScale})`;
       }
 
       case 'deform': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
-        if (!base) return '10000.0';
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
         let dp = pointVar;
-        if (d.deformType === 'twist') dp = `opTwist(${pointVar}, ${d.strength.toFixed(3)})`;
-        if (d.deformType === 'taper') dp = `opTaper(${pointVar}, ${d.strength.toFixed(3)})`;
+        const str = (d.strength || 0).toFixed(3);
+        const absStr = Math.abs(d.strength || 0).toFixed(3);
+        const doubleStr = ((d.strength || 0) * 2).toFixed(3);
+        const halfAbsStr = (Math.abs(d.strength || 0) * 0.5).toFixed(3);
+        
+        switch (d.deformType) {
+          case 'twist': dp = `opTwist(${pointVar}, ${str})`; break;
+          case 'taper': dp = `opTaper(${pointVar}, ${str})`; break;
+          case 'bend': dp = `opBend(${pointVar}, ${str})`; break;
+          case 'quantize': dp = `opQuantize(${pointVar}, ${str})`; break;
+          case 'ripple': dp = `opRipple(${pointVar}, ${doubleStr}, ${halfAbsStr})`; break;
+          case 'elongateX': dp = `opElongateX(${pointVar}, ${absStr})`; break;
+          case 'elongateY': dp = `opElongateY(${pointVar}, ${absStr})`; break;
+          case 'bulge': dp = `opBulge(${pointVar}, ${str})`; break;
+          case 'pinch': dp = `opPinch(${pointVar}, ${str})`; break;
+        }
         return generateNodeCode(base, dp);
       }
 
       case 'repeat': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
-        if (!base) return '10000.0';
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
         const dp = `opRepeat(${pointVar}, vec3(${d.spacing.map((v:any)=>v.toFixed(3)).join(',')}))`;
         return generateNodeCode(base, dp);
       }
 
       case 'symmetry': {
         const base = getConnectedNodes(node.id, 'base')[0] || getConnectedNodes(node.id)[0];
-        if (!base) return '10000.0';
+        if (!base) return 'vec4(vec3(0.0), 10000.0)';
         let dp = pointVar;
         if (d.symType === 'symX') dp = `opSymX(${pointVar})`;
         if (d.symType === 'symY') dp = `opSymY(${pointVar})`;
@@ -244,24 +561,32 @@ export function compileGraphToGLSL(): string {
       
       case 'mesh':
         console.log("Compiling mesh node. Data:", d);
+        const meshColor = d.color || '#f97316';
+        const colStr = hexToRgbFloat(meshColor);
         if (d.sdfTexture && d.bboxMin && d.bboxMax) {
           const texName = `u_meshTex_${node.id.replace(/-/g, '_')}`;
           const bMin = `vec3(${d.bboxMin[0].toFixed(5)}, ${d.bboxMin[1].toFixed(5)}, ${d.bboxMin[2].toFixed(5)})`;
           const bMax = `vec3(${d.bboxMax[0].toFixed(5)}, ${d.bboxMax[1].toFixed(5)}, ${d.bboxMax[2].toFixed(5)})`;
-          return `sdMeshTexture(${pointVar}, ${texName}, ${bMin}, ${bMax})`;
+          
+          const px = (d.position?.[0] || 0).toFixed(5);
+          const py = (d.position?.[1] || 0).toFixed(5);
+          const pz = (d.position?.[2] || 0).toFixed(5);
+          const sc = (d.scale || 1.0).toFixed(5);
+          
+          const localPoint = `((${pointVar} - vec3(${px}, ${py}, ${pz})) / ${sc})`;
+          return `vec4(${colStr}, sdMeshTexture(${localPoint}, ${texName}, ${bMin}, ${bMax}) * ${sc})`;
         }
-        return '10000.0';
+        return `vec4(${colStr}, 10000.0)`;
 
       default:
-        return '10000.0';
+        return 'vec4(vec3(0.0), 10000.0)';
     }
   };
 
   const finalInputNodes = getConnectedNodes(outputNode.id);
   if (finalInputNodes.length === 0) {
-    mapBody = 'return 10000.0;';
+    mapBody = 'return vec4(vec3(0.0), 10000.0);';
   } else {
-    // Union all inputs to OutputNode
     const inputs = finalInputNodes.map(n => generateNodeCode(n, 'p'));
     let combined = inputs[0];
     for (let i = 1; i < inputs.length; i++) {
@@ -284,22 +609,40 @@ export function compileGraphToGLSL(): string {
   uniform vec3 cameraUp;
   uniform vec3 cameraRight;
   uniform vec2 resolution;
+
+  uniform float uShowGround;
+  uniform float uShowShadows;
+  uniform float uShowAO;
+  uniform vec3 uLightDir;
+  uniform float uLightIntensity;
+  uniform float uAmbientIntensity;
+  uniform float uFocalLength;
+
   ${meshUniforms}
 
   ${SDF_LIBRARY}
 
-  float map(vec3 p) {
+  vec4 mapScene(vec3 p) {
       ${mapBody}
   }
 
+  float map(vec3 p) {
+      float dScene = mapScene(p).w;
+      if (uShowGround > 0.5) {
+          float dGround = p.y + 4.0;
+          return min(dScene, dGround);
+      }
+      return dScene;
+  }
+
   vec3 getNormal(vec3 p) {
-      float d = map(p);
-      vec2 e = vec2(.001, 0);
-      vec3 n = d - vec3(
-          map(p-e.xyy),
-          map(p-e.yxy),
-          map(p-e.yyx));
-      return normalize(n);
+      vec2 e = vec2(0.003, -0.003);
+      return normalize(
+          e.xyy * map(p + e.xyy) + 
+          e.yyx * map(p + e.yyx) + 
+          e.yxy * map(p + e.yxy) + 
+          e.xxx * map(p + e.xxx)
+      );
   }
 
   float rayMarch(vec3 ro, vec3 rd) {
@@ -313,6 +656,32 @@ export function compileGraphToGLSL(): string {
       return dO;
   }
 
+  float getShadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
+      float res = 1.0;
+      float t = mint;
+      for(int i=0; i<30; i++) {
+          float h = mapScene(ro + rd*t).w;
+          if(h < 0.001) return 0.0;
+          res = min(res, k*h/t);
+          t += clamp(h, 0.05, 0.5);
+          if(t > maxt) break;
+      }
+      return clamp(res, 0.0, 1.0);
+  }
+
+  float getAO(vec3 p, vec3 n) {
+      float occ = 0.0;
+      float sca = 1.0;
+      for(int i=0; i<5; i++) {
+          float hr = 0.01 + 0.12*float(i)/4.0;
+          vec3 aopos = n * hr + p;
+          float dd = map(aopos);
+          occ += -(dd-hr)*sca;
+          sca *= 0.95;
+      }
+      return clamp(1.0 - 3.0*occ, 0.0, 1.0);
+  }
+
   out vec4 fragColor;
 
   void main() {
@@ -322,7 +691,7 @@ export function compileGraphToGLSL(): string {
 
       // Camera setup
       vec3 ro = cameraPos;
-      vec3 rd = normalize(uv.x * cameraRight + uv.y * cameraUp + 1.0 * cameraDir);
+      vec3 rd = normalize(uv.x * cameraRight + uv.y * cameraUp + uFocalLength * cameraDir);
 
       float d = rayMarch(ro, rd);
 
@@ -334,14 +703,85 @@ export function compileGraphToGLSL(): string {
       vec3 p = ro + rd * d;
       vec3 n = getNormal(p);
       
-      // Basic lighting
-      vec3 lightDir = normalize(vec3(10.0, 10.0, 5.0));
-      float diff = max(dot(n, lightDir), 0.0);
-      vec3 col = vec3(0.02, 0.7, 0.8) * diff; // Cyan color
+      vec3 baseColor = vec3(0.02, 0.7, 0.8); // Default cool cyan for scene
+      bool isGround = false;
       
-      // Ambient
-      col += vec3(0.1);
-
+      float dScene = mapScene(p).w;
+      float dGround = p.y + 4.0;
+      if (uShowGround > 0.5 && dGround < dScene && dGround < 0.02) {
+          isGround = true;
+          n = vec3(0.0, 1.0, 0.0);
+          
+          // Grid pattern on ground
+          float gridScale = 1.0;
+          vec2 gridCoord = fract(p.xz / gridScale - 0.5) - 0.5;
+          float gridLine = smoothstep(0.04, 0.0, min(abs(gridCoord.x), abs(gridCoord.y)));
+          vec3 groundColor = mix(vec3(0.08, 0.08, 0.1), vec3(0.15, 0.15, 0.18), gridLine);
+          
+          // Radial fade to match background
+          float distToCenter = length(p.xz);
+          float fade = smoothstep(25.0, 5.0, distToCenter);
+          baseColor = mix(vec3(0.035, 0.035, 0.043), groundColor, fade);
+          
+          // Glossy reflection of the 3D model onto the ground
+          vec3 reflectDir = reflect(rd, vec3(0.0, 1.0, 0.0));
+          // Start raymarching slightly above ground to avoid hitting the ground itself
+          float dReflect = rayMarch(p + vec3(0.0, 0.02, 0.0), reflectDir);
+          
+          vec3 reflectCol = vec3(0.035, 0.035, 0.043); // default background color
+          if (dReflect < MAX_DIST) {
+              vec3 pReflect = (p + vec3(0.0, 0.02, 0.0)) + reflectDir * dReflect;
+              vec3 nReflect = getNormal(pReflect);
+              vec3 lDir = normalize(uLightDir);
+              float diffReflect = max(dot(nReflect, lDir), 0.0);
+              
+              float shadowReflect = 1.0;
+              if (uShowShadows > 0.5) {
+                  shadowReflect = getShadow(pReflect + nReflect * 0.02, lDir, 0.05, 15.0, 16.0);
+              }
+              
+              float aoReflect = 1.0;
+              if (uShowAO > 0.5) {
+                  aoReflect = getAO(pReflect, nReflect);
+              }
+              
+              vec3 modelColor = mapScene(pReflect).xyz; // get dynamic color of reflected point!
+              vec3 diffuseReflect = modelColor * diffReflect * uLightIntensity * shadowReflect;
+              vec3 ambientReflect = modelColor * uAmbientIntensity * aoReflect;
+              reflectCol = (diffuseReflect + ambientReflect) * aoReflect;
+          }
+          // Blend glossy reflection
+          baseColor = mix(baseColor, reflectCol, 0.25 * fade);
+      } else {
+          // If we hit the scene, get the scene color dynamically!
+          baseColor = mapScene(p).xyz;
+      }
+      
+      // Dynamic Lighting
+      vec3 lightDir = normalize(uLightDir);
+      float diff = max(dot(n, lightDir), 0.0);
+      
+      // Specular highlight (Blinn-Phong)
+      vec3 viewDir = normalize(cameraPos - p);
+      vec3 halfDir = normalize(lightDir + viewDir);
+      float spec = pow(max(dot(n, halfDir), 0.0), 32.0) * 0.4;
+      
+      float shadow = 1.0;
+      if (uShowShadows > 0.5) {
+          shadow = getShadow(p + n * 0.02, lightDir, 0.05, 15.0, 16.0);
+      }
+      
+      float ao = 1.0;
+      if (uShowAO > 0.5) {
+          ao = getAO(p, n);
+      }
+      
+      vec3 diffuse = baseColor * diff * uLightIntensity * shadow;
+      vec3 specular = vec3(1.0) * spec * uLightIntensity * shadow;
+      vec3 ambient = baseColor * uAmbientIntensity * ao;
+      
+      vec3 col = (diffuse + specular + ambient) * ao;
+ 
       fragColor = vec4(col, 1.0);
   }
   `;
