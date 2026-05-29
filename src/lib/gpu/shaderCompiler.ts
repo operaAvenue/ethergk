@@ -244,6 +244,263 @@ float sdOctahedral(vec3 p, float scale, float thickness) {
     return (abs(val) - thickness) / scale;
 }
 
+float sdDoubleGyroid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float dotP = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x);
+    return (abs(abs(dotP) - 0.5) - thickness) / scale;
+}
+float sdDoubleSchwarzP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.y) + cos(p.z);
+    return (abs(abs(val) - 1.0) - thickness) / scale;
+}
+float sdDoubleDiamond(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
+    return (abs(abs(val) - 0.5) - thickness) / scale;
+}
+float sdSchwarzCLP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*sin(p.z) + cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchwarzT(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - sin(p.x)*sin(p.y)*sin(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchoenIQP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 17.0 * (cos(p.x)*cos(p.y)*cos(p.z)) - 3.0 * (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdSchoenS(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y)*cos(p.z) - sin(p.x)*sin(p.y)*sin(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchoenM(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(2.0*p.x)*sin(p.y)*cos(p.z) + cos(2.0*p.y)*sin(p.z)*cos(p.x) + cos(2.0*p.z)*sin(p.x)*cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchoenY(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*sin(p.y)*cos(p.z) + cos(p.y)*sin(p.z)*cos(p.x) + cos(p.z)*sin(p.x)*cos(p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchoenHT(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 2.0*(cos(p.x) + cos(p.y))*cos(p.z) - cos(2.0*p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdKarcherSchwarz(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 3.0*(cos(p.x) + cos(p.y) + cos(p.z)) + 8.0*cos(p.x)*cos(p.y)*cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdNodal4Fold(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*sin(p.y) + sin(p.y)*sin(p.z) + sin(p.z)*sin(p.x);
+    return (abs(val) - thickness) / scale;
+}
+float sdNodal8Fold(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(2.0*p.x)*sin(2.0*p.y) + sin(2.0*p.y)*sin(2.0*p.z) + sin(2.0*p.z)*sin(2.0*p.x);
+    return (abs(val) - thickness) / scale;
+}
+float sdComplementaryIWP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 2.0 * (cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x)) - (cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (-val - thickness) / scale;
+}
+float sdSchoenSPrime(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y)*cos(p.z) + sin(p.x)*sin(p.y)*sin(p.z) - 0.5*(cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdBarthSextic(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 4.0*(cos(p.x)*cos(p.x) + cos(p.y)*cos(p.y) + cos(p.z)*cos(p.z)) - 5.0;
+    return (abs(val) - thickness) / scale;
+}
+float sdKummerQuartic(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y)*cos(p.z) - 0.25*(cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdTogliattiQuintic(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - 0.1*(cos(3.0*p.x) + cos(3.0*p.y) + cos(3.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdClebschCubic(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y)*cos(p.z) + 0.1*(cos(3.0*p.x) + cos(3.0*p.y) + cos(3.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdCayleyCubic(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - 1.0;
+    return (abs(val) - thickness) / scale;
+}
+float sdTubularDiamond(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
+    return (abs(abs(val) - 0.2) - thickness) / scale;
+}
+float sdTubularSchwarzP(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.y) + cos(p.z);
+    return (abs(abs(val) - 0.2) - thickness) / scale;
+}
+float sdTubularNeovius(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 3.0 * (cos(p.x) + cos(p.y) + cos(p.z)) + 4.0 * cos(p.x) * cos(p.y) * cos(p.z);
+    return (abs(abs(val) - 0.25) - thickness) / scale;
+}
+float sdTubularLidinoid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 0.5 * (sin(2.0*p.x)*cos(p.y)*sin(p.z) + sin(2.0*p.y)*cos(p.z)*sin(p.x) + sin(2.0*p.z)*cos(p.x)*sin(p.y)) - 0.5 * (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x)) + 0.15;
+    return (abs(abs(val) - 0.15) - thickness) / scale;
+}
+float sdSuperGyroid(vec3 p, float scale, float thickness) {
+    p *= (scale * 2.0);
+    float dotP = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x);
+    return (abs(dotP) - thickness) / (scale * 2.0);
+}
+float sdSuperSchwarzP(vec3 p, float scale, float thickness) {
+    p *= (scale * 2.0);
+    float val = cos(p.x) + cos(p.y) + cos(p.z);
+    return (abs(val) - thickness) / (scale * 2.0);
+}
+float sdSuperDiamond(vec3 p, float scale, float thickness) {
+    p *= (scale * 2.0);
+    float val = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
+    return (abs(val) - thickness) / (scale * 2.0);
+}
+float sdGyroidSchwarzHybrid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float valG = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x);
+    float valS = cos(p.x) + cos(p.y) + cos(p.z);
+    float val = mix(valG, valS, 0.5);
+    return (abs(val) - thickness) / scale;
+}
+float sdGyroidDiamondHybrid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float valG = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x);
+    float valD = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
+    float val = mix(valG, valD, 0.5);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchwarzDiamondHybrid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float valS = cos(p.x) + cos(p.y) + cos(p.z);
+    float valD = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z);
+    float val = mix(valS, valD, 0.5);
+    return (abs(val) - thickness) / scale;
+}
+float sdHelicoid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.z - atan(p.y, p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdDoubleHelicoid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = abs(sin(p.z - atan(p.y, p.x)));
+    return (abs(val) - thickness) / scale;
+}
+float sdTriangularHoneycomb(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.y) + cos(p.x-p.y);
+    return (abs(val) - thickness) / scale;
+}
+float sdKagome3D(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) + cos(p.x+p.y+p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdBoricAcidLayer(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y)*cos(p.z) - 0.5;
+    return (abs(val) - thickness) / scale;
+}
+float sdPoreNetwork(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 1.0 - (cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x));
+    return (abs(val) - thickness) / scale;
+}
+float sdSaddle(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) - cos(p.y) + cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdDoubleSaddle(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = abs(cos(p.x) - cos(p.y) + cos(p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdComplementaryFRD(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 4.0 * cos(p.x)*cos(p.y)*cos(p.z) - (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x));
+    return (-val - thickness) / scale;
+}
+float sdStaircaseGyroid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x+p.z)*cos(p.y) + sin(p.y+p.x)*cos(p.z) + sin(p.z+p.y)*cos(p.x);
+    return (abs(val) - thickness) / scale;
+}
+float sdTwistedGyroid(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x*cos(p.z))*cos(p.y*sin(p.x)) + sin(p.y*cos(p.x))*cos(p.z*sin(p.y)) + sin(p.z*cos(p.y))*cos(p.x*sin(p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdChiralDiamond(vec3 p, float scale, float thickness) {
+    float baseD = sdDiamond(p, scale, thickness);
+    p *= scale;
+    return baseD + 0.1 * sin(p.x + p.y) / scale;
+}
+float sdOctetTrussVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = abs(sin(p.x)*cos(p.y)) + abs(sin(p.y)*cos(p.z)) + abs(sin(p.z)*cos(p.x)) - 1.0;
+    return (abs(val) - thickness) / scale;
+}
+float sdKelvinFoam(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) + cos(p.y)*cos(p.z) + cos(p.z)*cos(p.x) - 0.2;
+    return (abs(val) - thickness) / scale;
+}
+float sdSchwarzHPrime(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x)*cos(p.y) - cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdGyroidVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*cos(p.y) + sin(p.y)*cos(p.z) + sin(p.z)*cos(p.x) + 0.5*cos(p.x)*cos(p.y)*cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdSchwarzPVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = cos(p.x) + cos(p.y) + cos(p.z) + 0.5*sin(p.x)*sin(p.y)*sin(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdDiamondVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = sin(p.x)*sin(p.y)*sin(p.z) + sin(p.x)*cos(p.y)*cos(p.z) + cos(p.x)*sin(p.y)*cos(p.z) + cos(p.x)*cos(p.y)*sin(p.z) + 0.2*cos(p.x)*cos(p.y)*cos(p.z);
+    return (abs(val) - thickness) / scale;
+}
+float sdNeoviusVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 3.0 * (cos(p.x) + cos(p.y) + cos(p.z)) + 4.0 * cos(p.x) * cos(p.y) * cos(p.z) + 0.5*(cos(2.0*p.x) + cos(2.0*p.y) + cos(2.0*p.z));
+    return (abs(val) - thickness) / scale;
+}
+float sdLidinoidVariant(vec3 p, float scale, float thickness) {
+    p *= scale;
+    float val = 0.5 * (sin(2.0*p.x)*cos(p.y)*sin(p.z) + sin(2.0*p.y)*cos(p.z)*sin(p.x) + sin(2.0*p.z)*cos(p.x)*sin(p.y)) - 0.5 * (cos(2.0*p.x)*cos(2.0*p.y) + cos(2.0*p.y)*cos(2.0*p.z) + cos(2.0*p.z)*cos(2.0*p.x)) + 0.3;
+    return (abs(val) - thickness) / scale;
+}
+
 
 // Space Modifiers
 vec3 opTwist(vec3 p, float k) {
@@ -467,6 +724,56 @@ export function compileGraphToGLSL(): string {
           case 'weairePhelan': latCode = `sdWeairePhelan(${pointVar}, ${ls}, ${lt})`; break;
           case 'boxFrame': latCode = `sdBoxFrame(${pointVar}, ${ls}, ${lt})`; break;
           case 'octahedral': latCode = `sdOctahedral(${pointVar}, ${ls}, ${lt})`; break;
+          case 'doubleGyroid': latCode = `sdDoubleGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'doubleSchwarzP': latCode = `sdDoubleSchwarzP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'doubleDiamond': latCode = `sdDoubleDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzCLP': latCode = `sdSchwarzCLP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzT': latCode = `sdSchwarzT(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenIQP': latCode = `sdSchoenIQP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenS': latCode = `sdSchoenS(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenM': latCode = `sdSchoenM(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenY': latCode = `sdSchoenY(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenHT': latCode = `sdSchoenHT(${pointVar}, ${ls}, ${lt})`; break;
+          case 'karcherSchwarz': latCode = `sdKarcherSchwarz(${pointVar}, ${ls}, ${lt})`; break;
+          case 'nodal4Fold': latCode = `sdNodal4Fold(${pointVar}, ${ls}, ${lt})`; break;
+          case 'nodal8Fold': latCode = `sdNodal8Fold(${pointVar}, ${ls}, ${lt})`; break;
+          case 'complementaryIWP': latCode = `sdComplementaryIWP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schoenSPrime': latCode = `sdSchoenSPrime(${pointVar}, ${ls}, ${lt})`; break;
+          case 'barthSextic': latCode = `sdBarthSextic(${pointVar}, ${ls}, ${lt})`; break;
+          case 'kummerQuartic': latCode = `sdKummerQuartic(${pointVar}, ${ls}, ${lt})`; break;
+          case 'togliattiQuintic': latCode = `sdTogliattiQuintic(${pointVar}, ${ls}, ${lt})`; break;
+          case 'clebschCubic': latCode = `sdClebschCubic(${pointVar}, ${ls}, ${lt})`; break;
+          case 'cayleyCubic': latCode = `sdCayleyCubic(${pointVar}, ${ls}, ${lt})`; break;
+          case 'tubularDiamond': latCode = `sdTubularDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'tubularSchwarzP': latCode = `sdTubularSchwarzP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'tubularNeovius': latCode = `sdTubularNeovius(${pointVar}, ${ls}, ${lt})`; break;
+          case 'tubularLidinoid': latCode = `sdTubularLidinoid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'superGyroid': latCode = `sdSuperGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'superSchwarzP': latCode = `sdSuperSchwarzP(${pointVar}, ${ls}, ${lt})`; break;
+          case 'superDiamond': latCode = `sdSuperDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'gyroidSchwarzHybrid': latCode = `sdGyroidSchwarzHybrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'gyroidDiamondHybrid': latCode = `sdGyroidDiamondHybrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzDiamondHybrid': latCode = `sdSchwarzDiamondHybrid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'helicoid': latCode = `sdHelicoid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'doubleHelicoid': latCode = `sdDoubleHelicoid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'triangularHoneycomb': latCode = `sdTriangularHoneycomb(${pointVar}, ${ls}, ${lt})`; break;
+          case 'kagome3D': latCode = `sdKagome3D(${pointVar}, ${ls}, ${lt})`; break;
+          case 'boricAcidLayer': latCode = `sdBoricAcidLayer(${pointVar}, ${ls}, ${lt})`; break;
+          case 'poreNetwork': latCode = `sdPoreNetwork(${pointVar}, ${ls}, ${lt})`; break;
+          case 'saddle': latCode = `sdSaddle(${pointVar}, ${ls}, ${lt})`; break;
+          case 'doubleSaddle': latCode = `sdDoubleSaddle(${pointVar}, ${ls}, ${lt})`; break;
+          case 'complementaryFRD': latCode = `sdComplementaryFRD(${pointVar}, ${ls}, ${lt})`; break;
+          case 'staircaseGyroid': latCode = `sdStaircaseGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'twistedGyroid': latCode = `sdTwistedGyroid(${pointVar}, ${ls}, ${lt})`; break;
+          case 'chiralDiamond': latCode = `sdChiralDiamond(${pointVar}, ${ls}, ${lt})`; break;
+          case 'octetTrussVariant': latCode = `sdOctetTrussVariant(${pointVar}, ${ls}, ${lt})`; break;
+          case 'kelvinFoam': latCode = `sdKelvinFoam(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzHPrime': latCode = `sdSchwarzHPrime(${pointVar}, ${ls}, ${lt})`; break;
+          case 'gyroidVariant': latCode = `sdGyroidVariant(${pointVar}, ${ls}, ${lt})`; break;
+          case 'schwarzPVariant': latCode = `sdSchwarzPVariant(${pointVar}, ${ls}, ${lt})`; break;
+          case 'diamondVariant': latCode = `sdDiamondVariant(${pointVar}, ${ls}, ${lt})`; break;
+          case 'neoviusVariant': latCode = `sdNeoviusVariant(${pointVar}, ${ls}, ${lt})`; break;
+          case 'lidinoidVariant': latCode = `sdLidinoidVariant(${pointVar}, ${ls}, ${lt})`; break;
           default: latCode = `sdGyroid(${pointVar}, ${ls}, ${lt})`; break;
         }
         return `vec4(${baseCode}.xyz, opIntersect(${baseCode}, vec4(vec3(0.0), ${latCode})).w)`;

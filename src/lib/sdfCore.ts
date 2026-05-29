@@ -399,3 +399,309 @@ export function sdOctahedral(p: THREE.Vector3, scale: number, thickness: number)
   const val = (qx + qy + qz) - 2.5;
   return (Math.abs(val) - thickness) / scale;
 }
+
+export function sdDoubleGyroid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const dotP = Math.sin(scaledP.x)*Math.cos(scaledP.y) + Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.z)*Math.cos(scaledP.x);
+  return (Math.abs(Math.abs(dotP) - 0.5) - thickness) / scale;
+}
+
+export function sdDoubleSchwarzP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  return (Math.abs(Math.abs(val) - 1.0) - thickness) / scale;
+}
+
+export function sdDoubleDiamond(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(Math.abs(val) - 0.5) - thickness) / scale;
+}
+
+export function sdSchwarzCLP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.z) + Math.cos(scaledP.y);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchwarzT(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x) - Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchoenIQP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 17.0 * (Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z)) - 3.0 * (Math.cos(2.0*scaledP.x)*Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.y)*Math.cos(2.0*scaledP.z) + Math.cos(2.0*scaledP.z)*Math.cos(2.0*scaledP.x));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchoenS(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) - Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchoenM(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(2.0*scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(2.0*scaledP.y)*Math.sin(scaledP.z)*Math.cos(scaledP.x) + Math.cos(2.0*scaledP.z)*Math.sin(scaledP.x)*Math.cos(scaledP.y);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchoenY(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.y)*Math.sin(scaledP.z)*Math.cos(scaledP.x) + Math.cos(scaledP.z)*Math.sin(scaledP.x)*Math.cos(scaledP.y);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchoenHT(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 2.0*(Math.cos(scaledP.x) + Math.cos(scaledP.y))*Math.cos(scaledP.z) - Math.cos(2.0*scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdKarcherSchwarz(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 3.0*(Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z)) + 8.0*Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdNodal4Fold(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.y) + Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.z)*Math.sin(scaledP.x);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdNodal8Fold(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(2.0*scaledP.x)*Math.sin(2.0*scaledP.y) + Math.sin(2.0*scaledP.y)*Math.sin(2.0*scaledP.z) + Math.sin(2.0*scaledP.z)*Math.sin(2.0*scaledP.x);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdComplementaryIWP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 2.0 * (Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x)) - (Math.cos(2.0*scaledP.x) + Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.z));
+  return (-val - thickness) / scale;
+}
+
+export function sdSchoenSPrime(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) - 0.5*(Math.cos(2.0*scaledP.x) + Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdBarthSextic(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 4.0*(Math.cos(scaledP.x)*Math.cos(scaledP.x) + Math.cos(scaledP.y)*Math.cos(scaledP.y) + Math.cos(scaledP.z)*Math.cos(scaledP.z)) - 5.0;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdKummerQuartic(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) - 0.25*(Math.cos(2.0*scaledP.x) + Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdTogliattiQuintic(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x) - 0.1*(Math.cos(3.0*scaledP.x) + Math.cos(3.0*scaledP.y) + Math.cos(3.0*scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdClebschCubic(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + 0.1*(Math.cos(3.0*scaledP.x) + Math.cos(3.0*scaledP.y) + Math.cos(3.0*scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdCayleyCubic(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x) - 1.0;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdTubularDiamond(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(Math.abs(val) - 0.2) - thickness) / scale;
+}
+
+export function sdTubularSchwarzP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  return (Math.abs(Math.abs(val) - 0.2) - thickness) / scale;
+}
+
+export function sdTubularNeovius(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 3.0 * (Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z)) + 4.0 * Math.cos(scaledP.x) * Math.cos(scaledP.y) * Math.cos(scaledP.z);
+  return (Math.abs(Math.abs(val) - 0.25) - thickness) / scale;
+}
+
+export function sdTubularLidinoid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 0.5 * (Math.sin(2.0*scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z) + Math.sin(2.0*scaledP.y)*Math.cos(scaledP.z)*Math.sin(scaledP.x) + Math.sin(2.0*scaledP.z)*Math.cos(scaledP.x)*Math.sin(scaledP.y)) - 0.5 * (Math.cos(2.0*scaledP.x)*Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.y)*Math.cos(2.0*scaledP.z) + Math.cos(2.0*scaledP.z)*Math.cos(2.0*scaledP.x)) + 0.15;
+  return (Math.abs(Math.abs(val) - 0.15) - thickness) / scale;
+}
+
+export function sdSuperGyroid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale * 2.0);
+  const dotP = Math.sin(scaledP.x)*Math.cos(scaledP.y) + Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.z)*Math.cos(scaledP.x);
+  return (Math.abs(dotP) - thickness) / (scale * 2.0);
+}
+
+export function sdSuperSchwarzP(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale * 2.0);
+  const val = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / (scale * 2.0);
+}
+
+export function sdSuperDiamond(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale * 2.0);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(val) - thickness) / (scale * 2.0);
+}
+
+export function sdGyroidSchwarzHybrid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const valG = Math.sin(scaledP.x)*Math.cos(scaledP.y) + Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.z)*Math.cos(scaledP.x);
+  const valS = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  const val = valG * 0.5 + valS * 0.5;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdGyroidDiamondHybrid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const valG = Math.sin(scaledP.x)*Math.cos(scaledP.y) + Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.z)*Math.cos(scaledP.x);
+  const valD = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z);
+  const val = valG * 0.5 + valD * 0.5;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchwarzDiamondHybrid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const valS = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  const valD = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z);
+  const val = valS * 0.5 + valD * 0.5;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdHelicoid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.z - Math.atan2(scaledP.y, scaledP.x));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdDoubleHelicoid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.abs(Math.sin(scaledP.z - Math.atan2(scaledP.y, scaledP.x)));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdTriangularHoneycomb(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.x - scaledP.y);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdKagome3D(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x) + Math.cos(scaledP.x + scaledP.y + scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdBoricAcidLayer(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) - 0.5;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdPoreNetwork(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 1.0 - (Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSaddle(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x) - Math.cos(scaledP.y) + Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdDoubleSaddle(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.abs(Math.cos(scaledP.x) - Math.cos(scaledP.y) + Math.cos(scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdComplementaryFRD(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 4.0 * Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) - (Math.cos(2.0*scaledP.x)*Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.y)*Math.cos(2.0*scaledP.z) + Math.cos(2.0*scaledP.z)*Math.cos(2.0*scaledP.x));
+  return (-val - thickness) / scale;
+}
+
+export function sdStaircaseGyroid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x+scaledP.z)*Math.cos(scaledP.y) + Math.sin(scaledP.y+scaledP.x)*Math.cos(scaledP.z) + Math.sin(scaledP.z+scaledP.y)*Math.cos(scaledP.x);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdTwistedGyroid(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x*Math.cos(scaledP.z))*Math.cos(scaledP.y*Math.sin(scaledP.x)) + Math.sin(scaledP.y*Math.cos(scaledP.x))*Math.cos(scaledP.z*Math.sin(scaledP.y)) + Math.sin(scaledP.z*Math.cos(scaledP.y))*Math.cos(scaledP.x*Math.sin(scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdChiralDiamond(p: THREE.Vector3, scale: number, thickness: number): number {
+  const baseD = sdDiamond(p, scale, thickness);
+  const scaledP = p.clone().multiplyScalar(scale);
+  return baseD + 0.1 * Math.sin(scaledP.x + scaledP.y) / scale;
+}
+
+export function sdOctetTrussVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.abs(Math.sin(scaledP.x)*Math.cos(scaledP.y)) + Math.abs(Math.sin(scaledP.y)*Math.cos(scaledP.z)) + Math.abs(Math.sin(scaledP.z)*Math.cos(scaledP.x)) - 1.0;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdKelvinFoam(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) + Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.z)*Math.cos(scaledP.x) - 0.2;
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchwarzHPrime(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x)*Math.cos(scaledP.y) - Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdGyroidVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.cos(scaledP.y) + Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.sin(scaledP.z)*Math.cos(scaledP.x) + 0.5*Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdSchwarzPVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z) + 0.5*Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdDiamondVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = Math.sin(scaledP.x)*Math.sin(scaledP.y)*Math.sin(scaledP.z) + Math.sin(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.sin(scaledP.y)*Math.cos(scaledP.z) + Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z) + 0.2*Math.cos(scaledP.x)*Math.cos(scaledP.y)*Math.cos(scaledP.z);
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdNeoviusVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 3.0 * (Math.cos(scaledP.x) + Math.cos(scaledP.y) + Math.cos(scaledP.z)) + 4.0 * Math.cos(scaledP.x) * Math.cos(scaledP.y) * Math.cos(scaledP.z) + 0.5*(Math.cos(2.0*scaledP.x) + Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.z));
+  return (Math.abs(val) - thickness) / scale;
+}
+
+export function sdLidinoidVariant(p: THREE.Vector3, scale: number, thickness: number): number {
+  const scaledP = p.clone().multiplyScalar(scale);
+  const val = 0.5 * (Math.sin(2.0*scaledP.x)*Math.cos(scaledP.y)*Math.sin(scaledP.z) + Math.sin(2.0*scaledP.y)*Math.cos(scaledP.z)*Math.sin(scaledP.x) + Math.sin(2.0*scaledP.z)*Math.cos(scaledP.x)*Math.sin(scaledP.y)) - 0.5 * (Math.cos(2.0*scaledP.x)*Math.cos(2.0*scaledP.y) + Math.cos(2.0*scaledP.y)*Math.cos(2.0*scaledP.z) + Math.cos(2.0*scaledP.z)*Math.cos(2.0*scaledP.x)) + 0.3;
+  return (Math.abs(val) - thickness) / scale;
+}

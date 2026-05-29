@@ -48,7 +48,17 @@ export interface LatticeNodeData extends BaseNodeData {
     | 'grid' | 'honeycomb' | 'octet' | 'sineWave' | 'foam' | 'fractalNoise' | 'cylindricalGrid' | 'tubularGyroid'
     | 'fischerKochS' | 'fischerKochD' | 'splitP' | 'gPrime' | 'iwp2' | 'carlyle' | 'crossedDecagons' 
     | 'kelvin' | 'kagome' | 'waffle' | 'chiral' | 'radialGrid' | 'herringbone' | 'weairePhelan' 
-    | 'boxFrame' | 'octahedral';
+    | 'boxFrame' | 'octahedral'
+    | 'doubleGyroid' | 'doubleSchwarzP' | 'doubleDiamond' | 'schwarzCLP' | 'schwarzT' 
+    | 'schoenIQP' | 'schoenS' | 'schoenM' | 'schoenY' | 'schoenHT' 
+    | 'karcherSchwarz' | 'nodal4Fold' | 'nodal8Fold' | 'complementaryIWP' | 'schoenSPrime' 
+    | 'barthSextic' | 'kummerQuartic' | 'togliattiQuintic' | 'clebschCubic' | 'cayleyCubic' 
+    | 'tubularDiamond' | 'tubularSchwarzP' | 'tubularNeovius' | 'tubularLidinoid' | 'superGyroid' 
+    | 'superSchwarzP' | 'superDiamond' | 'gyroidSchwarzHybrid' | 'gyroidDiamondHybrid' | 'schwarzDiamondHybrid' 
+    | 'helicoid' | 'doubleHelicoid' | 'triangularHoneycomb' | 'kagome3D' | 'boricAcidLayer' 
+    | 'poreNetwork' | 'saddle' | 'doubleSaddle' | 'complementaryFRD' | 'staircaseGyroid' 
+    | 'twistedGyroid' | 'chiralDiamond' | 'octetTrussVariant' | 'kelvinFoam' | 'schwarzHPrime' 
+    | 'gyroidVariant' | 'schwarzPVariant' | 'diamondVariant' | 'neoviusVariant' | 'lidinoidVariant';
   scale: number;
   thickness: number;
   color?: string;

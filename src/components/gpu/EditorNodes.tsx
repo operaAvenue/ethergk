@@ -282,6 +282,64 @@ export function LatticeNode(props: NodeProps<any>) {
           <option value="fractalNoise">Fractal Noise</option>
           <option value="sineWave">Sine Ripple</option>
         </optgroup>
+        <optgroup label="Double &amp; Tubular Lattices">
+          <option value="doubleGyroid">Double Gyroid</option>
+          <option value="doubleSchwarzP">Double Schwarz P</option>
+          <option value="doubleDiamond">Double Diamond</option>
+          <option value="tubularDiamond">Tubular Diamond</option>
+          <option value="tubularSchwarzP">Tubular Schwarz P</option>
+          <option value="tubularNeovius">Tubular Neovius</option>
+          <option value="tubularLidinoid">Tubular Lidinoid</option>
+          <option value="superGyroid">Super-Gyroid</option>
+          <option value="superSchwarzP">Super-Schwarz P</option>
+          <option value="superDiamond">Super-Diamond</option>
+        </optgroup>
+        <optgroup label="Hybrids &amp; Morphing Lattices">
+          <option value="gyroidSchwarzHybrid">Gyroid-Schwarz Hybrid</option>
+          <option value="gyroidDiamondHybrid">Gyroid-Diamond Hybrid</option>
+          <option value="schwarzDiamondHybrid">Schwarz-Diamond Hybrid</option>
+          <option value="gyroidVariant">Gyroid Variant</option>
+          <option value="schwarzPVariant">Schwarz P Variant</option>
+          <option value="diamondVariant">Diamond Variant</option>
+          <option value="neoviusVariant">Neovius Variant</option>
+          <option value="lidinoidVariant">Lidinoid Variant</option>
+          <option value="chiralDiamond">Chiral Diamond</option>
+        </optgroup>
+        <optgroup label="Advanced TPMS &amp; Periodic Cells">
+          <option value="schwarzCLP">Schwarz CLP</option>
+          <option value="schwarzT">Schwarz T</option>
+          <option value="schoenIQP">Schoen I-QP</option>
+          <option value="schoenS">Schoen S</option>
+          <option value="schoenM">Schoen M</option>
+          <option value="schoenY">Schoen Y</option>
+          <option value="schoenHT">Schoen H-T</option>
+          <option value="karcherSchwarz">Karcher Schwarz</option>
+          <option value="nodal4Fold">Nodal TPMS 4-Fold</option>
+          <option value="nodal8Fold">Nodal TPMS 8-Fold</option>
+          <option value="complementaryIWP">Complementary I-WP</option>
+          <option value="schoenSPrime">Schoen S-Prime</option>
+          <option value="barthSextic">Barth Sextic Periodic</option>
+          <option value="kummerQuartic">Kummer Quartic Periodic</option>
+          <option value="togliattiQuintic">Togliatti Quintic Periodic</option>
+          <option value="clebschCubic">Clebsch Cubic Periodic</option>
+          <option value="cayleyCubic">Cayley Cubic Periodic</option>
+          <option value="complementaryFRD">Complementary Schoen F-RD</option>
+          <option value="staircaseGyroid">Staircase Gyroid</option>
+          <option value="twistedGyroid">Twisted Gyroid</option>
+          <option value="schwarzHPrime">Schwarz H-Prime</option>
+        </optgroup>
+        <optgroup label="Periodic Layers &amp; Saddle Lattices">
+          <option value="helicoid">Helicoid Infill</option>
+          <option value="doubleHelicoid">Double Helicoid</option>
+          <option value="triangularHoneycomb">Triangular Honeycomb</option>
+          <option value="kagome3D">Kagome 3D Variant</option>
+          <option value="boricAcidLayer">Boric Acid Layer</option>
+          <option value="poreNetwork">Pore Network</option>
+          <option value="saddle">Saddle TPMS</option>
+          <option value="doubleSaddle">Double Saddle</option>
+          <option value="octetTrussVariant">Octet Truss Variant</option>
+          <option value="kelvinFoam">Kelvin Foam</option>
+        </optgroup>
       </select>
       <div className="space-y-1.5">
         <div className="flex justify-between items-center text-[10px] text-zinc-500">
